@@ -17,6 +17,10 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Rotas de autenticação
+const authRoutes = require('./routes/auth');
+app.use('/api/auth', authRoutes);
+
 // Socket.IO
 const io = socketIo(server, {
   cors: {
