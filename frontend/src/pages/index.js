@@ -17,13 +17,14 @@ export default function Home() {
     
     if (token && savedUser) {
       setUser(JSON.parse(savedUser));
+    } else {
+      router.push('/login');
     }
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    setUser(null);
     router.push('/login');
   };
 
@@ -61,7 +62,6 @@ export default function Home() {
     setLoading(false);
   };
 
-  // Se não estiver logado, redireciona para o login
   if (!user) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -88,6 +88,20 @@ export default function Home() {
           <h1 style={{ fontSize: '24px', margin: 0, color: '#f39c12' }}>Dominion Arena</h1>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <button
+            onClick={() => router.push('/ranking')}
+            style={{
+              background: '#f39c12',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              color: '#000',
+              cursor: 'pointer',
+              fontWeight: 'bold'
+            }}
+          >
+            🏆 Ranking
+          </button>
           <span style={{ color: '#fff' }}>👤 {user.username}</span>
           <span style={{ color: '#f39c12' }}>⭐ ELO: {user.elo || 1200}</span>
           <button

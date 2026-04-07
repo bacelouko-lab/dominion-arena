@@ -9,7 +9,25 @@ require('dotenv').config();
 const app = express();
 const server = http.createServer(app);
 
-// CORS
+// CORS TOTALMENTE LIBERADO
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.header('ngrok-skip-browser-warning', 'true');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
+const io = socketIo(server, {
+  cors: {
+    origin: "*",
+    methods: ['GET', 'POST']
+  }
+});
+
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -21,23 +39,26 @@ app.use(express.json());
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 
-// Socket.IO
-const io = socketIo(server, {
-  cors: {
-    origin: "*",
-    methods: ['GET', 'POST']
+// Rota de ranking
+app.get('/api/ranking', async (req, res) => {
+  const { supabase } = require('./supabase');
+  
+  const { data, error } = await supabase
+    .from('users')
+    .select('username, elo, wins, losses')
+    .order('elo', { ascending: false })
+    .limit(50);
+  
+  if (error) {
+    return res.status(400).json({ error: error.message });
   }
+  
+  res.json(data);
 });
 
 const games = new Map();
 const playerSockets = new Map();
 const readyPlayersMap = new Map();
-
-// Mapa para armazenar jogadores desconectados temporariamente (para reconexão)
-const disconnectedPlayers = new Map(); // key: playerId, value: { gameId, playerState, disconnectTime }
-
-// Tempo para reconexão (30 segundos)
-const RECONNECT_TIMEOUT = 30000;
 
 function generateShortCode() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -69,88 +90,12 @@ app.get('/api/games/:gameId', (req, res) => {
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
 
-  // ========== RECONEXÃO ==========
-  socket.on('reconnect-game', ({ gameId, username, playerId }) => {
-    console.log(`🔄 Tentativa de reconexão: ${username} (${playerId}) na sala ${gameId}`);
-    
-    // Verifica se o jogador está na lista de desconectados
-    const disconnectedData = disconnectedPlayers.get(playerId);
-    
-    if (disconnectedData && disconnectedData.gameId === gameId) {
-      const game = games.get(gameId);
-      if (!game) {
-        socket.emit('error', 'Game not found');
-        return;
-      }
-      
-      // Verifica se o jogador ainda existe no jogo
-      if (game.players[playerId]) {
-        // Reconnect - restaura o socket
-        playerSockets.set(playerId, socket.id);
-        socket.join(gameId);
-        socket.gameId = gameId;
-        socket.playerId = playerId;
-        
-        // Remove da lista de desconectados
-        disconnectedPlayers.delete(playerId);
-        
-        // Notifica todos que o jogador reconectou
-        io.to(gameId).emit('player-reconnected', { 
-          playerId, 
-          username: game.players[playerId].username 
-        });
-        
-        // Envia o estado atual do jogo
-        socket.emit('game-state', game.getGameState());
-        
-        console.log(`✅ Jogador ${username} reconectou com sucesso!`);
-      } else {
-        socket.emit('error', 'Jogador não encontrado na partida');
-      }
-    } else {
-      // Não há dados de desconexão - tratar como novo jogador
-      socket.emit('error', 'Sessão expirada. Crie uma nova sala.');
-    }
-  });
-
   socket.on('join-game', ({ gameId, username }) => {
     const game = games.get(gameId);
     if (!game) {
       socket.emit('error', 'Game not found');
       return;
     }
-    
-    // Verifica se o jogador já existe (reconexão sem token)
-    let existingPlayerId = null;
-    for (const [pid, player] of Object.entries(game.players)) {
-      if (player.username === username) {
-        existingPlayerId = pid;
-        break;
-      }
-    }
-    
-    if (existingPlayerId) {
-      // Reconexão! Restaura o jogador
-      console.log(`🔄 Reconexão do jogador ${username} (${existingPlayerId})`);
-      playerSockets.set(existingPlayerId, socket.id);
-      socket.join(gameId);
-      socket.gameId = gameId;
-      socket.playerId = existingPlayerId;
-      
-      // Remove da lista de desconectados se estiver lá
-      disconnectedPlayers.delete(existingPlayerId);
-      
-      // Notifica todos
-      io.to(gameId).emit('player-reconnected', { 
-        playerId: existingPlayerId, 
-        username 
-      });
-      
-      socket.emit('game-state', game.getGameState());
-      return;
-    }
-    
-    // Novo jogador
     const playerId = uuidv4();
     game.addPlayer(playerId, username);
     playerSockets.set(playerId, socket.id);
@@ -433,43 +378,27 @@ io.on('connection', (socket) => {
     console.log(`User disconnected: ${socket.id}`);
     const gameId = socket.gameId;
     const playerId = socket.playerId;
-    
     if (gameId && playerId) {
       const game = games.get(gameId);
-      if (game && game.players[playerId]) {
-        // Salva o estado do jogador para reconexão
-        const playerState = { ...game.players[playerId] };
-        disconnectedPlayers.set(playerId, {
-          gameId,
-          playerState,
-          disconnectTime: Date.now()
-        });
-        
-        // Remove o jogador da sala ativa (mas mantém no jogo)
-        // Não deleta o jogador - apenas marca como desconectado
-        
-        // Limpa entradas antigas (mais de 30 segundos)
-        for (const [pid, data] of disconnectedPlayers.entries()) {
-          if (Date.now() - data.disconnectTime > RECONNECT_TIMEOUT) {
-            // Tempo de reconexão expirado - remove permanentemente
-            const expiredGame = games.get(data.gameId);
-            if (expiredGame && expiredGame.players[pid]) {
-              delete expiredGame.players[pid];
-              expiredGame.playerOrder = expiredGame.playerOrder.filter(id => id !== pid);
-              io.to(data.gameId).emit('player-left', { playerId: pid });
-            }
-            disconnectedPlayers.delete(pid);
-          }
-        }
-        
-        io.to(gameId).emit('player-disconnected', { playerId, username: game.players[playerId]?.username });
-        console.log(`💀 Jogador ${game.players[playerId]?.username} desconectou. Aguardando reconexão por ${RECONNECT_TIMEOUT/1000}s...`);
+      if (game) {
+        delete game.players[playerId];
+        game.playerOrder = game.playerOrder.filter(id => id !== playerId);
+        io.to(gameId).emit('player-left', { playerId });
+      }
+      const readyList = readyPlayersMap.get(gameId);
+      if (readyList) {
+        const index = readyList.indexOf(playerId);
+        if (index !== -1) readyList.splice(index, 1);
       }
     }
   });
 });
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-});
+const startServer = async () => {
+  console.log('Database disabled - running without database');
+  server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+};
+startServer();
+
+module.exports = { app, io, games };
