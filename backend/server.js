@@ -89,22 +89,35 @@ app.get('/api/games/:gameId', (req, res) => {
 
 // ========== FUNÇÃO PARA SALVAR PARTIDA ==========
 async function saveMatch(game, winnerId, loserId) {
+  console.log('🟢 saveMatch chamada!', { winnerId, loserId });
+  
   const { supabase } = require('./supabase');
   
   // Buscar ELO atual dos jogadores
-  const { data: winner } = await supabase
+  const { data: winner, error: winnerError } = await supabase
     .from('users')
-    .select('elo, username')
+    .select('elo, username, wins')
     .eq('id', winnerId)
     .single();
   
-  const { data: loser } = await supabase
+  if (winnerError) {
+    console.error('❌ Erro ao buscar vencedor:', winnerError);
+    return;
+  }
+  
+  const { data: loser, error: loserError } = await supabase
     .from('users')
-    .select('elo, username')
+    .select('elo, username, losses')
     .eq('id', loserId)
     .single();
   
-  if (!winner || !loser) return;
+  if (loserError) {
+    console.error('❌ Erro ao buscar perdedor:', loserError);
+    return;
+  }
+  
+  console.log(`📊 Vencedor: ${winner.username} (ELO: ${winner.elo}, Wins: ${winner.wins || 0})`);
+  console.log(`📊 Perdedor: ${loser.username} (ELO: ${loser.elo}, Losses: ${loser.losses || 0})`);
   
   // Calcular novo ELO
   const K = 32;
@@ -113,6 +126,8 @@ async function saveMatch(game, winnerId, loserId) {
   
   const newWinnerElo = Math.round(winner.elo + K * (1 - expectedWinner));
   const newLoserElo = Math.round(loser.elo + K * (0 - expectedLoser));
+  
+  console.log(`📊 Novo ELO: ${winner.username} ${winner.elo}→${newWinnerElo}, ${loser.username} ${loser.elo}→${newLoserElo}`);
   
   // Salvar partida
   const { error: matchError } = await supabase
@@ -130,13 +145,13 @@ async function saveMatch(game, winnerId, loserId) {
     });
   
   if (matchError) {
-    console.error('Erro ao salvar partida:', matchError);
+    console.error('❌ Erro ao salvar partida:', matchError);
   } else {
     console.log(`✅ Partida salva: ${winner.username} (${winner.elo}→${newWinnerElo}) vs ${loser.username} (${loser.elo}→${newLoserElo})`);
   }
   
   // Atualizar ELO e vitórias/derrotas dos jogadores
-  await supabase
+  const { error: updateWinnerError } = await supabase
     .from('users')
     .update({ 
       elo: newWinnerElo,
@@ -144,13 +159,27 @@ async function saveMatch(game, winnerId, loserId) {
     })
     .eq('id', winnerId);
   
-  await supabase
+  if (updateWinnerError) {
+    console.error('❌ Erro ao atualizar vencedor:', updateWinnerError);
+  } else {
+    console.log(`✅ Vencedor atualizado: ${winner.username} - Wins: ${(winner.wins || 0) + 1}`);
+  }
+  
+  const { error: updateLoserError } = await supabase
     .from('users')
     .update({ 
       elo: newLoserElo,
       losses: (loser.losses || 0) + 1
     })
     .eq('id', loserId);
+  
+  if (updateLoserError) {
+    console.error('❌ Erro ao atualizar perdedor:', updateLoserError);
+  } else {
+    console.log(`✅ Perdedor atualizado: ${loser.username} - Losses: ${(loser.losses || 0) + 1}`);
+  }
+  
+  console.log('✅ saveMatch concluída!');
 }
 
 io.on('connection', (socket) => {
@@ -329,7 +358,8 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('attack-player', () => {
+  // ========== EVENTO DE ATAQUE MODIFICADO ==========
+  socket.on('attack-player', async () => {
     const game = games.get(socket.gameId);
     if (!game) return;
     
@@ -373,24 +403,31 @@ io.on('connection', (socket) => {
       annulledCard: annulledCard
     });
     
+    // Verifica se o defensor morreu
     if (defender.life <= 0) {
+      console.log(`💀 Jogador morreu! ${defender.username} vida: ${defender.life}`);
       const alivePlayers = Object.values(game.players).filter(p => p.life > 0);
+      console.log(`👥 Jogadores vivos: ${alivePlayers.length}`);
       
       if (alivePlayers.length <= 1) {
+        console.log(`🏆 FIM DE JOGO DETECTADO!`);
         const winner = alivePlayers[0];
-        // Salvar partida no banco
-        saveMatch(game, winner.playerId, defender.playerId);
+        try {
+          await saveMatch(game, winner.playerId, defender.playerId);
+        } catch (err) {
+          console.error('❌ Erro ao salvar partida:', err);
+        }
         io.to(socket.gameId).emit('game-over', { 
           winner: { playerId: winner.playerId, username: winner.username }, 
           loser: { playerId: defender.playerId, username: defender.username } 
         });
         return;
       } else {
+        console.log(`⚠️ Jogador eliminado, mas jogo continua. Vivos: ${alivePlayers.length}`);
         io.to(socket.gameId).emit('player-eliminated', { 
           playerId: defender.playerId, 
           username: defender.username 
         });
-        console.log(`💀 ${defender.username} foi eliminado!`);
       }
     }
     
