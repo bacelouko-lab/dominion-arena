@@ -5,11 +5,10 @@ const { supabase } = require('../supabase');
 
 const router = express.Router();
 
-// ROTA DE REGISTRO (criar conta)
+// ROTA DE REGISTRO
 router.post('/register', async (req, res) => {
   const { email, username, password } = req.body;
 
-  // Verificar se usuário já existe
   const { data: existingUser } = await supabase
     .from('users')
     .select('*')
@@ -20,17 +19,17 @@ router.post('/register', async (req, res) => {
     return res.status(400).json({ error: 'Email ou usuário já existe' });
   }
 
-  // Criptografar a senha
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // Salvar no banco
   const { data: newUser, error } = await supabase
     .from('users')
     .insert({
       email,
       username,
       password_hash: hashedPassword,
-      elo: 1200
+      elo: 1200,
+      wins: 0,
+      losses: 0
     })
     .select()
     .single();
@@ -39,7 +38,6 @@ router.post('/register', async (req, res) => {
     return res.status(400).json({ error: error.message });
   }
 
-  // Criar token de autenticação (válido por 7 dias)
   const token = jwt.sign(
     { userId: newUser.id },
     process.env.JWT_SECRET,
@@ -57,11 +55,10 @@ router.post('/register', async (req, res) => {
   });
 });
 
-// ROTA DE LOGIN (entrar)
+// ROTA DE LOGIN
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
-  // Buscar usuário pelo email
   const { data: user, error } = await supabase
     .from('users')
     .select('*')
@@ -72,13 +69,11 @@ router.post('/login', async (req, res) => {
     return res.status(401).json({ error: 'Email ou senha inválidos' });
   }
 
-  // Verificar a senha
   const validPassword = await bcrypt.compare(password, user.password_hash);
   if (!validPassword) {
     return res.status(401).json({ error: 'Email ou senha inválidos' });
   }
 
-  // Criar token
   const token = jwt.sign(
     { userId: user.id },
     process.env.JWT_SECRET,

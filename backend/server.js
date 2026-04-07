@@ -87,6 +87,72 @@ app.get('/api/games/:gameId', (req, res) => {
   res.json(game.getGameState());
 });
 
+// ========== FUNÇÃO PARA SALVAR PARTIDA ==========
+async function saveMatch(game, winnerId, loserId) {
+  const { supabase } = require('./supabase');
+  
+  // Buscar ELO atual dos jogadores
+  const { data: winner } = await supabase
+    .from('users')
+    .select('elo, username')
+    .eq('id', winnerId)
+    .single();
+  
+  const { data: loser } = await supabase
+    .from('users')
+    .select('elo, username')
+    .eq('id', loserId)
+    .single();
+  
+  if (!winner || !loser) return;
+  
+  // Calcular novo ELO
+  const K = 32;
+  const expectedWinner = 1 / (1 + Math.pow(10, (loser.elo - winner.elo) / 400));
+  const expectedLoser = 1 / (1 + Math.pow(10, (winner.elo - loser.elo) / 400));
+  
+  const newWinnerElo = Math.round(winner.elo + K * (1 - expectedWinner));
+  const newLoserElo = Math.round(loser.elo + K * (0 - expectedLoser));
+  
+  // Salvar partida
+  const { error: matchError } = await supabase
+    .from('matches')
+    .insert({
+      game_id: game.gameId,
+      winner_id: winnerId,
+      loser_id: loserId,
+      winner_elo_before: winner.elo,
+      winner_elo_after: newWinnerElo,
+      loser_elo_before: loser.elo,
+      loser_elo_after: newLoserElo,
+      duration: game.turn,
+      round: game.round
+    });
+  
+  if (matchError) {
+    console.error('Erro ao salvar partida:', matchError);
+  } else {
+    console.log(`✅ Partida salva: ${winner.username} (${winner.elo}→${newWinnerElo}) vs ${loser.username} (${loser.elo}→${newLoserElo})`);
+  }
+  
+  // Atualizar ELO e vitórias/derrotas dos jogadores
+  await supabase
+    .from('users')
+    .update({ 
+      elo: newWinnerElo,
+      wins: (winner.wins || 0) + 1
+    })
+    .eq('id', winnerId);
+  
+  await supabase
+    .from('users')
+    .update({ 
+      elo: newLoserElo,
+      losses: (loser.losses || 0) + 1
+    })
+    .eq('id', loserId);
+}
+
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
 
@@ -312,6 +378,8 @@ io.on('connection', (socket) => {
       
       if (alivePlayers.length <= 1) {
         const winner = alivePlayers[0];
+        // Salvar partida no banco
+        saveMatch(game, winner.playerId, defender.playerId);
         io.to(socket.gameId).emit('game-over', { 
           winner: { playerId: winner.playerId, username: winner.username }, 
           loser: { playerId: defender.playerId, username: defender.username } 
