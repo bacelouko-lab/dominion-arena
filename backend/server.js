@@ -9,15 +9,20 @@ require('dotenv').config();
 const app = express();
 const server = http.createServer(app);
 
+// Configuração CORS simplificada e funcional
 app.use(cors({
-  origin: ['https://frontend-gold-nine-95.vercel.app', 'http://localhost:3000', 'http://localhost:5000'],
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  credentials: true
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
-// Para OPTIONS preflight requests
-app.options('*', cors());
+// Responde preflight requests automaticamente
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.sendStatus(200);
+});
 app.use(express.json());
 
 const games = new Map();
