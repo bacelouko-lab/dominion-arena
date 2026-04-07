@@ -475,10 +475,9 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 5000;
-const startServer = async () => {
-  console.log('Database disabled - running without database');
-  server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-};
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
+});
 startServer();
 
 module.exports = { app, io, games };
