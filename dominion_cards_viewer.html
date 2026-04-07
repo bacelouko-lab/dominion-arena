@@ -1,0 +1,107 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Dominion Arena Tática - Galeria de Cartas</title>
+    <style>
+        body { background: #0f0f1b; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; }
+        h1 { text-align: center; color: #ffd700; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
+        .filters { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
+        .filter-btn { background: #222; border: 1px solid #444; color: white; padding: 8px 15px; border-radius: 20px; cursor: pointer; transition: 0.3s; }
+        .filter-btn:hover, .filter-btn.active { background: #ffd700; color: black; border-color: #ffd700; }
+
+        .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 25px; max-width: 1200px; margin: 0 auto; }
+
+        .card-item { position: relative; width: 150px; cursor: pointer; transition: transform 0.2s; }
+        .card-item:hover { transform: scale(1.05); z-index: 10; }
+        .card-img { width: 100%; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); border: 2px solid #333; }
+
+        .evolution-tooltip {
+            position: absolute; bottom: 105%; left: 50%; transform: translateX(-50%);
+            width: 220px; background: rgba(10, 10, 30, 0.95); border: 2px solid #ffd700;
+            padding: 12px; border-radius: 8px; font-size: 13px; opacity: 0; pointer-events: none; transition: 0.3s;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); text-align: center;
+        }
+        .card-item:hover .evolution-tooltip { opacity: 1; }
+
+        .card-info { margin-top: 10px; text-align: center; font-size: 12px; color: #aaa; }
+        .copies-badge { background: #444; padding: 2px 8px; border-radius: 10px; font-size: 10px; color: #fff; }
+    </style>
+</head>
+<body>
+
+    <h1>🏰 DOMINION ARENA TÁTICA</h1>
+    <p style="text-align: center; color: #888;">Galeria completa de Heróis e Dragões</p>
+
+    <div class="filters" id="filters">
+        <button class="filter-btn active" onclick="filterCards('Todas')">Todas</button>
+        <button class="filter-btn" onclick="filterCards('Vulcão')">🔥 Vulcão</button>
+        <button class="filter-btn" onclick="filterCards('Montanha')">🏔️ Montanha</button>
+        <button class="filter-btn" onclick="filterCards('Céu')">☁️ Céu</button>
+        <button class="filter-btn" onclick="filterCards('Lago')">🌊 Lago</button>
+        <button class="filter-btn" onclick="filterCards('Floresta')">🌲 Floresta</button>
+        <button class="filter-btn" onclick="filterCards('Deserto')">🏜️ Deserto</button>
+    </div>
+
+    <div class="gallery" id="gallery"></div>
+
+    <script>
+        // Carregando os dados via Fetch ou Script (simulado aqui com os dados reais)
+        const cards = [
+            {"id": 1, "nome": "Guerreiro Vulcânico", "regiao": "Vulcão", "classe": "Guerreiro", "custo": 2, "imagem": "guerreiro_vulcanico.png", "evolucao": "Ganha +1 ATK base e bônus de região dobrado.", "copias": 4},
+            {"id": 2, "nome": "Salamandra Ígnea", "regiao": "Vulcão", "classe": "Monstro", "custo": 3, "imagem": "salamandra_ignea.png", "evolucao": "O oponente tem -4 DEF (em vez de -2).", "copias": 3},
+            {"id": 3, "nome": "Xamã das Cinzas", "regiao": "Vulcão", "classe": "Mago", "custo": 2, "imagem": "xama_das_cinzas.png", "evolucao": "Causa 2 de Dano Direto (em vez de 1).", "copias": 4},
+            {"id": 4, "nome": "Assassino da Brasa", "regiao": "Vulcão", "classe": "Ladino", "custo": 4, "imagem": "assassino_da_brasa.png", "evolucao": "Ganha +6 ATK e sofre apenas -1 VIDA.", "copias": 2},
+            {"id": 5, "nome": "Ladrão de Cinzas", "regiao": "Vulcão", "classe": "Ladino", "custo": 3, "imagem": "ladrao_das_cinzas.png", "evolucao": "Ganha +4 ATK se ATK > DEF.", "copias": 3},
+            {"id": 6, "nome": "Barganhador Ígneo", "regiao": "Vulcão", "classe": "Mercador", "custo": 2, "imagem": "barganhador_igneo.png", "evolucao": "+3 ATK para cada dado jogado.", "copias": 4},
+            {"id": 31, "nome": "Dragão do Fogo Eterno", "regiao": "Vulcão", "classe": "Dragão", "custo": 8, "imagem": "dragao_do_fogo_eterno.png", "evolucao": "Dano de Área: 3 dano a todos inimigos.", "copias": 1},
+            // Adicionando os outros exemplos resumidos...
+            {"id": 8, "nome": "Anão Escudeiro", "regiao": "Montanha", "classe": "Guerreiro", "custo": 3, "imagem": "anao_escudeiro.png", "evolucao": "Ganha +5 DEF base.", "copias": 3},
+            {"id": 11, "nome": "Mago da Montanha", "regiao": "Montanha", "classe": "Mago", "custo": 4, "imagem": "mago_da_montanha.png", "evolucao": "Equipe ignora 2 de dano recebido.", "copias": 2},
+            {"id": 32, "nome": "Dragão Gigante de Rocha", "regiao": "Montanha", "classe": "Dragão", "custo": 8, "imagem": "dragao_gigante_de_rocha.png", "evolucao": "Invulnerável no primeiro hit.", "copias": 1},
+            {"id": 12, "nome": "Mercador Alado", "regiao": "Céu", "classe": "Mercador", "custo": 2, "imagem": "mercador_alado.png", "evolucao": "+4 ATK e +2 DEF.", "copias": 4},
+            {"id": 16, "nome": "Anjo Governante", "regiao": "Céu", "classe": "Mercador", "custo": 4, "imagem": "anjo_governante.png", "evolucao": "Gaste 1 Ouro para +2 ATK (Max 12).", "copias": 2},
+            {"id": 33, "nome": "Dragão Celestial", "regiao": "Céu", "classe": "Dragão", "custo": 8, "imagem": "dragao_celestial_das_nuvens.png", "evolucao": "Sempre rola 6.", "copias": 1},
+            {"id": 17, "nome": "Ladrão das Margens", "regiao": "Lago", "classe": "Ladino", "custo": 2, "imagem": "ladrao_das_margens.png", "evolucao": "Dado Par: +4 ATK / +2 DEF.", "copias": 4},
+            {"id": 34, "nome": "Dragão dos Oceanos", "regiao": "Lago", "classe": "Dragão", "custo": 8, "imagem": "dragao_dos_oceanos.png", "evolucao": "Reduz ATK oponente em 50%.", "copias": 1},
+            {"id": 22, "nome": "Executor Folha-dura", "regiao": "Floresta", "classe": "Guerreiro", "custo": 2, "imagem": "executor_folha_dura.png", "evolucao": "+6 ATK se houver outra Floresta.", "copias": 4},
+            {"id": 35, "nome": "Dragão da Floresta", "regiao": "Floresta", "classe": "Dragão", "custo": 8, "imagem": "dragao_protetor_da_floresta.png", "evolucao": "Cura 5 vida pós combate.", "copias": 1},
+            {"id": 26, "nome": "Saqueador Dunas", "regiao": "Deserto", "classe": "Ladino", "custo": 2, "imagem": "saqueador_das_dunas.png", "evolucao": "Oponente sofre -3 DEF.", "copias": 4},
+            {"id": 36, "nome": "Dragão das Areias", "regiao": "Deserto", "classe": "Dragão", "custo": 8, "imagem": "dragao_das_areias.png", "evolucao": "Anula sinergias contra você.", "copias": 1}
+        ];
+
+        function renderGallery(filter = 'Todas') {
+            const container = document.getElementById('gallery');
+            container.innerHTML = '';
+
+            const filtered = filter === 'Todas' ? cards : cards.filter(c => c.regiao === filter);
+
+            filtered.forEach(c => {
+                const item = document.createElement('div');
+                item.className = 'card-item';
+                item.innerHTML = `
+                    <div class="evolution-tooltip">
+                        <strong style="color:#ffd700">EVOLUÇÃO:</strong><br>${c.evolucao}
+                    </div>
+                    <img src="/Uploads/${c.imagem}" class="card-img" alt="${c.nome}" onerror="this.src='https://via.placeholder.com/150x200?text=Sem+Imagem'">
+                    <div class="card-info">
+                        <strong>${c.nome}</strong><br>
+                        ${c.regiao} | ${c.classe}<br>
+                        <span class="copies-badge">${c.copias} cópias</span>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function filterCards(regiao) {
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            renderGallery(regiao);
+        }
+
+        renderGallery();
+    </script>
+</body>
+</html>
