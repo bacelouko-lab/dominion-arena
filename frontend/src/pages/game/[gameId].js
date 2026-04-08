@@ -19,9 +19,21 @@ export default function GamePage() {
 
     const socket = initSocket();
 
+    // Busca camada extra de segurança: Puxar do localStorage caso a URL ainda não tenha hidratado
+    let safeUserId = userId;
+    try {
+      const savedUser = localStorage.getItem('user');
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        if (parsed.id) safeUserId = parsed.id;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
     socket.on('connect', () => {
       setConnected(true);
-      socket.emit('join-game', { gameId, username, userId });
+      socket.emit('join-game', { gameId, username, userId: safeUserId });
     });
 
     socket.on('game-state', (state) => {
