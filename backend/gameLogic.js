@@ -104,9 +104,10 @@ class GameLogic {
       attempts++;
     }
     
+    const wrappedAround = nextIndex <= this.currentPlayerIndex;
     this.currentPlayerIndex = nextIndex;
     
-    if (this.currentPlayerIndex === 0) {
+    if (wrappedAround) {
       this.round++;
       console.log(`🆕 NOVO ROUND ${this.round}!`);
       this.attackedThisRound = [];
@@ -147,6 +148,7 @@ class GameLogic {
   }
 
   applyEndOfTurnEffects(player) {
+    if (player.life <= 0) return; // Mortos não recebem efeitos de fim de turno
     const synergies = player.synergies || { regions: {}, classes: {} };
     
     if (synergies.classes?.['Suporte'] >= 2) {

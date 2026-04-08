@@ -459,8 +459,18 @@ io.on('connection', (socket) => {
   // ========== EVENTO DE ATAQUE MODIFICADO ==========
   socket.on('attack-player', async () => {
     const game = games.get(socket.gameId);
-    if (!game) return;
+    if (!game || game.phase !== 'combat') return;
+
+    // Trava de segurança: Verifica se é o dono do turno
+    const currentPlayer = game.getCurrentPlayer();
+    if (!currentPlayer || currentPlayer.playerId !== socket.playerId) {
+      console.log(`🚫 Tentativa de ataque inválida por ${socket.playerId}`);
+      return;
+    }
     
+    // Muda a fase temporariamente para impedir cliques duplos durante o processamento do vídeo/animação no frontend
+    game.phase = 'attacking';
+
     const targetPlayerId = game.getRandomAttackTarget(socket.playerId);
     
     if (!targetPlayerId) {
@@ -630,7 +640,30 @@ io.on('connection', (socket) => {
                 io.to(gameId).emit('player-left', { playerId });
                 disconnectTimers.delete(timerKey);
                 
-                // Se ele caiu e era bem a vez dele jogar, vira o jogo pro próximo!
+                // VERIFICAÇÃO DE VITÓRIA POR WO (Desistência/Time-out)
+                const alivePlayers = Object.values(checkGame.players).filter(p => p.life > 0);
+                if (alivePlayers.length === 1 && checkGame.phase !== 'end') {
+                  const winner = alivePlayers[0];
+                  checkGame.phase = 'end';
+                  console.log(`🏆 FIM DE JOGO POR W.O.! ${winner.username} venceu.`);
+                  
+                  io.to(gameId).emit('game-over', { 
+                    winner: { playerId: winner.playerId, username: winner.username },
+                    loser: { playerId, username: player.username }
+                  });
+
+                  // Limpeza da memória
+                  setTimeout(() => {
+                    if (games.has(gameId)) {
+                      console.log(`🧹 Limpeza: Removendo jogo finalizado ${gameId} após W.O.`);
+                      games.delete(gameId);
+                      readyPlayersMap.delete(gameId);
+                    }
+                  }, 120000);
+                  return;
+                }
+
+                // Se o jogo continua, vira o turno se era a vez dele
                 const currentPlayer = checkGame.getCurrentPlayer();
                 if (currentPlayer && currentPlayer.playerId === playerId) {
                   const result = checkGame.endCurrentTurn();
