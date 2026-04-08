@@ -36,7 +36,7 @@ export default function Home() {
     setLoading(true);
     try {
       const response = await api.createGame(`Game by ${username}`);
-      router.push(`/game/${response.gameId}?username=${encodeURIComponent(username)}`);
+      router.push(`/game/${response.gameId}?username=${encodeURIComponent(username)}&userId=${user.id}`);
     } catch (err) {
       setError('Erro ao criar jogo');
     }
@@ -55,7 +55,7 @@ export default function Home() {
     setLoading(true);
     try {
       await api.getGame(gameId);
-      router.push(`/game/${gameId}?username=${encodeURIComponent(username)}`);
+      router.push(`/game/${gameId}?username=${encodeURIComponent(username)}&userId=${user.id}`);
     } catch (err) {
       setError('Sala não encontrada');
     }

@@ -5,7 +5,7 @@ import GameBoard from '../../components/GameBoard';
 
 export default function GamePage() {
   const router = useRouter();
-  const { gameId, username } = router.query;
+  const { gameId, username, userId } = router.query;
   const [gameState, setGameState] = useState(null);
   const [playerState, setPlayerState] = useState(null);
   const [error, setError] = useState('');
@@ -21,7 +21,7 @@ export default function GamePage() {
 
     socket.on('connect', () => {
       setConnected(true);
-      socket.emit('join-game', { gameId, username });
+      socket.emit('join-game', { gameId, username, userId });
     });
 
     socket.on('game-state', (state) => {
@@ -82,7 +82,7 @@ export default function GamePage() {
       socket.off('error');
       socket.off('disconnect');
     };
-  }, [gameId, username, gameState]);
+  }, [gameId, username, userId, gameState]);
 
   const markReady = () => {
     const socket = getSocket();

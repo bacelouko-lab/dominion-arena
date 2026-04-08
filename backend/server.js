@@ -185,13 +185,13 @@ async function saveMatch(game, winnerId, loserId) {
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
 
-  socket.on('join-game', ({ gameId, username }) => {
+  socket.on('join-game', ({ gameId, username, userId }) => {
     const game = games.get(gameId);
     if (!game) {
       socket.emit('error', 'Game not found');
       return;
     }
-    const playerId = uuidv4();
+    const playerId = userId || uuidv4();
     game.addPlayer(playerId, username);
     playerSockets.set(playerId, socket.id);
     socket.join(gameId);
