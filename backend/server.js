@@ -59,6 +59,7 @@ app.get('/api/ranking', async (req, res) => {
 const games = new Map();
 const playerSockets = new Map();
 const readyPlayersMap = new Map();
+const disconnectTimers = new Map();
 
 function generateShortCode() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -284,6 +285,16 @@ io.on('connection', (socket) => {
     socket.join(gameId);
     socket.gameId = gameId;
     socket.playerId = playerId;
+    
+    // Cancela o timer de eliminação se ele existia
+    const timerKey = `${gameId}-${playerId}`;
+    if (disconnectTimers.has(timerKey)) {
+      clearTimeout(disconnectTimers.get(timerKey));
+      disconnectTimers.delete(timerKey);
+      io.to(gameId).emit('player-reconnected', { playerId, username });
+      console.log(`🔌 ${username} se reconectou a tempo na partida ${gameId}.`);
+    }
+
     socket.emit('game-state', game.getGameState());
     const readyList = readyPlayersMap.get(gameId) || [];
     io.to(gameId).emit('player-joined', { players: Object.values(game.players), readyList });
@@ -585,21 +596,36 @@ io.on('connection', (socket) => {
           game.playerOrder = game.playerOrder.filter(id => id !== playerId);
           io.to(gameId).emit('player-left', { playerId });
         } else {
-          // Se o jogo já iniciou, mata o jogador pra que o jogo pule a vez dele
+          // Graça / Tolerância de 60 Segundos
           const player = game.players[playerId];
           if (player) {
-            player.life = 0; // "Eliminado por desconexão"
-            io.to(gameId).emit('player-eliminated', { playerId, username: player.username });
-            io.to(gameId).emit('player-left', { playerId });
+            player.connected = false;
+            io.to(gameId).emit('player-disconnected', { playerId, username: player.username });
+            console.log(`⏳ ${player.username} desconectou. Aguardando 60s antes de eliminar...`);
+
+            const timerKey = `${gameId}-${playerId}`;
+            const timerId = setTimeout(() => {
+              // Verifica novamente se o jogador ainda está desconectado após o limite de tempo
+              const checkGame = games.get(gameId);
+              if (checkGame && checkGame.players[playerId] && !checkGame.players[playerId].connected) {
+                console.log(`💀 ${player.username} não voltou a tempo e foi eliminado.`);
+                checkGame.players[playerId].life = 0; // "Eliminado por desconexão"
+                io.to(gameId).emit('player-eliminated', { playerId, username: player.username });
+                io.to(gameId).emit('player-left', { playerId });
+                disconnectTimers.delete(timerKey);
+                
+                // Se ele caiu e era bem a vez dele jogar, vira o jogo pro próximo!
+                const currentPlayer = checkGame.getCurrentPlayer();
+                if (currentPlayer && currentPlayer.playerId === playerId) {
+                  const result = checkGame.endCurrentTurn();
+                  io.to(gameId).emit('game-state', checkGame.getGameState());
+                  io.to(gameId).emit('turn-ended', result);
+                  io.to(gameId).emit('phase-changed', { phase: 'roll', turn: result.turn, nextPlayerId: result.nextPlayerId });
+                }
+              }
+            }, 60000); // 60 segundos
             
-            // Se ele caiu e era bem a vez dele jogar, vira o jogo pro próximo!
-            const currentPlayer = game.getCurrentPlayer();
-            if (currentPlayer && currentPlayer.playerId === playerId) {
-              const result = game.endCurrentTurn();
-              io.to(gameId).emit('game-state', game.getGameState());
-              io.to(gameId).emit('turn-ended', result);
-              io.to(gameId).emit('phase-changed', { phase: 'roll', turn: result.turn, nextPlayerId: result.nextPlayerId });
-            }
+            disconnectTimers.set(timerKey, timerId);
           }
         }
       }

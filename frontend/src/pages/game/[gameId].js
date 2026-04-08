@@ -13,6 +13,7 @@ export default function GamePage() {
   const [readyPlayers, setReadyPlayers] = useState([]);
   const [isReady, setIsReady] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
+  const [disconnectedRivals, setDisconnectedRivals] = useState([]);
 
   useEffect(() => {
     if (!gameId || !username) return;
@@ -51,6 +52,14 @@ export default function GamePage() {
           setIsReady(true);
         }
       }
+    });
+
+    socket.on('player-disconnected', ({ username }) => {
+      setDisconnectedRivals((prev) => [...prev, username]);
+    });
+
+    socket.on('player-reconnected', ({ username }) => {
+      setDisconnectedRivals((prev) => prev.filter(n => n !== username));
     });
 
     socket.on('player-ready', ({ readyList }) => {
@@ -201,8 +210,25 @@ export default function GamePage() {
   // JOGO INICIADO
   return (
     <div style={{ minHeight: '100vh', padding: '20px' }}>
-      <h2>Sala: {gameId}</h2>
-      <p>Jogador: {username}</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2>Sala: {gameId}</h2>
+          <p>Jogador: {username}</p>
+        </div>
+        
+        {disconnectedRivals.length > 0 && (
+          <div style={{
+            background: 'rgba(233, 69, 96, 0.2)',
+            border: '1px solid #e94560',
+            padding: '10px 20px',
+            borderRadius: '8px',
+            color: '#ff6b81'
+          }}>
+            ⚠️ Aguardando reconexão: {disconnectedRivals.join(', ')}... (60s)
+          </div>
+        )}
+      </div>
+
       {gameState && playerState ? (
         <GameBoard gameState={gameState} gameId={gameId} username={username} />
       ) : (

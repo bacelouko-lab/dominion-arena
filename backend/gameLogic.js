@@ -14,6 +14,10 @@ class GameLogic {
   }
 
   addPlayer(playerId, username) {
+    if (this.players[playerId]) {
+      this.players[playerId].connected = true;
+      return;
+    }
     this.players[playerId] = {
       playerId,
       username,
@@ -34,16 +38,17 @@ class GameLogic {
       costReduction: 0,
       hasUsedInvulnerable: false,
       extraDiceBonus: 0,
-      anjoGovernanteSpent: 0,      // Anjo Governante (id:16) - ouro gasto
-      anjoGovernanteBonus: 0,      // Anjo Governante - bônus acumulado
+      anjoGovernanteSpent: 0,
+      anjoGovernanteBonus: 0,
       monstroDirectDamage: 0,
       freeCardUsed: false,
       abilityDoubleUsed: false,
       ladinoUsedThisAttack: false,
-      copiedSynergy: null,          // Feirante do Bosque (id:25)
+      copiedSynergy: null,
       copiedSynergyLevel: 0,
-      rerollsRemaining: 2,          // Oráculo do Lago (id:19)
-      hasRerolled: false
+      rerollsRemaining: 2,
+      hasRerolled: false,
+      connected: true
     };
     this.playerOrder.push(playerId);
   }
