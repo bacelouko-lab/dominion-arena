@@ -69,6 +69,37 @@ function generateShortCode() {
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
+// Endpoint para Matchmaking Público
+app.get('/api/games/public', (req, res) => {
+  let availableGameId = null;
+
+  for (const [gameId, game] of games.entries()) {
+    const isLobbyPhase = game.turn === 0;
+    const isNotFull = Object.keys(game.players).length < 6;
+    
+    if (game.isPublic && isLobbyPhase && isNotFull) {
+      availableGameId = gameId;
+      break;
+    }
+  }
+
+  if (!availableGameId) {
+    let exists = true;
+    while (exists) {
+      availableGameId = generateShortCode();
+      exists = games.has(availableGameId);
+    }
+    const newGame = new GameLogic(availableGameId);
+    newGame.isPublic = true;
+    games.set(availableGameId, newGame);
+    console.log(`🌍 Novo Lobby Público criado: ${availableGameId}`);
+  } else {
+    console.log(`🌍 Jogador encontrou Lobby Público existente: ${availableGameId}`);
+  }
+
+  res.json({ gameId: availableGameId, gameName: `Game ${availableGameId}` });
+});
+
 app.post('/api/games', (req, res) => {
   let gameId;
   let exists = true;

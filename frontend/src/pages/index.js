@@ -78,6 +78,23 @@ export default function Home() {
     setLoading(false);
   };
 
+  const handleJoinPublicGame = async () => {
+    if (!username.trim()) {
+      setError('Digite seu nome primeiro');
+      return;
+    }
+    setLoading(true);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://dominion-arena-1.onrender.com';
+      const res = await fetch(`${apiUrl}/api/games/public`);
+      const data = await res.json();
+      router.push(`/game/${data.gameId}?username=${encodeURIComponent(username)}&userId=${user.id}`);
+    } catch (err) {
+      setError('Erro ao procurar partida pública');
+    }
+    setLoading(false);
+  };
+
   if (!user) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -169,6 +186,30 @@ export default function Home() {
                 color: 'white'
               }}
             />
+          </div>
+
+          <button
+            onClick={handleJoinPublicGame}
+            disabled={loading}
+            style={{
+              width: '100%',
+              padding: '16px 12px',
+              background: 'linear-gradient(90deg, #f39c12, #e67e22)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '18px',
+              fontWeight: 'bold',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              marginBottom: '15px',
+              boxShadow: '0 4px 15px rgba(243, 156, 18, 0.4)'
+            }}
+          >
+            {loading ? 'Buscando...' : '🕹️ Procurar Partida Pública'}
+          </button>
+
+          <div style={{ textAlign: 'center', margin: '20px 0', color: '#666', borderBottom: '1px solid #333', lineHeight: '0.1em' }}>
+            <span style={{ background: '#1a1a2e', padding: '0 10px' }}>Salas Privadas</span>
           </div>
 
           <button
