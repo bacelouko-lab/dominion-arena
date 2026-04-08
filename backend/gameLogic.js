@@ -128,6 +128,12 @@ class GameLogic {
     if (currentPlayer) {
       currentPlayer.hasActedThisTurn = true;
       this.applyEndOfTurnEffects(currentPlayer);
+      
+      // O ouro que não foi gasto na loja volta para o cofre!
+      if (currentPlayer.gold > 0) {
+        currentPlayer.savedPoints += currentPlayer.gold;
+        currentPlayer.gold = 0;
+      }
     }
     
     const nextPlayer = this.nextPlayer();
@@ -382,7 +388,8 @@ class GameLogic {
 
     if (!choseShop) {
       const pointsToSave = player.gold;
-      player.savedPoints += pointsToSave;
+      // O player.gold já tem os savedPoints somados nele ali no rollDice! Usa '=' para não duplicar magicamente
+      player.savedPoints = pointsToSave;
       player.gold = 0;
       this.phase = 'combat';
     } else {

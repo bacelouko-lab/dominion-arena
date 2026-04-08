@@ -120,7 +120,7 @@ export default function Opponents({ opponents, currentUsername, gameId }) {
             {/* Status do oponente */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
+              gridTemplateColumns: 'repeat(4, 1fr)',
               gap: '10px',
               marginBottom: '20px',
               padding: '15px',
@@ -140,7 +140,12 @@ export default function Opponents({ opponents, currentUsername, gameId }) {
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: '24px' }}>💰</div>
                 <div style={{ fontWeight: 'bold' }}>{selectedOpponent.gold || 0}</div>
-                <div style={{ fontSize: '12px', color: '#aaa' }}>Ouro</div>
+                <div style={{ fontSize: '12px', color: '#aaa' }}>Ouro Livre</div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '24px' }}>🏦</div>
+                <div style={{ fontWeight: 'bold' }}>{selectedOpponent.savedPoints || 0}</div>
+                <div style={{ fontSize: '12px', color: '#aaa' }}>Cofre</div>
               </div>
             </div>
 
