@@ -531,6 +531,12 @@ io.on('connection', (socket) => {
     const game = games.get(socket.gameId);
     if (!game) return;
     
+    // Bloqueia cliques duplos ou de pessoas que não estão no turno
+    const currentPlayer = game.getCurrentPlayer();
+    if (!currentPlayer || currentPlayer.playerId !== socket.playerId) {
+      return; 
+    }
+    
     const result = game.endCurrentTurn();
     const updatedGameState = game.getGameState();
     
@@ -573,9 +579,29 @@ io.on('connection', (socket) => {
     if (gameId && playerId) {
       const game = games.get(gameId);
       if (game) {
-        delete game.players[playerId];
-        game.playerOrder = game.playerOrder.filter(id => id !== playerId);
-        io.to(gameId).emit('player-left', { playerId });
+        if (game.turn === 0) {
+          // Se ainda está no lobby, deleta pra sempre liberando a vaga
+          delete game.players[playerId];
+          game.playerOrder = game.playerOrder.filter(id => id !== playerId);
+          io.to(gameId).emit('player-left', { playerId });
+        } else {
+          // Se o jogo já iniciou, mata o jogador pra que o jogo pule a vez dele
+          const player = game.players[playerId];
+          if (player) {
+            player.life = 0; // "Eliminado por desconexão"
+            io.to(gameId).emit('player-eliminated', { playerId, username: player.username });
+            io.to(gameId).emit('player-left', { playerId });
+            
+            // Se ele caiu e era bem a vez dele jogar, vira o jogo pro próximo!
+            const currentPlayer = game.getCurrentPlayer();
+            if (currentPlayer && currentPlayer.playerId === playerId) {
+              const result = game.endCurrentTurn();
+              io.to(gameId).emit('game-state', game.getGameState());
+              io.to(gameId).emit('turn-ended', result);
+              io.to(gameId).emit('phase-changed', { phase: 'roll', turn: result.turn, nextPlayerId: result.nextPlayerId });
+            }
+          }
+        }
       }
       const readyList = readyPlayersMap.get(gameId);
       if (readyList) {
