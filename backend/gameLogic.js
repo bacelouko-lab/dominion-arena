@@ -129,11 +129,8 @@ class GameLogic {
       currentPlayer.hasActedThisTurn = true;
       this.applyEndOfTurnEffects(currentPlayer);
       
-      // O ouro que não foi gasto na loja volta para o cofre!
-      if (currentPlayer.gold > 0) {
-        currentPlayer.savedPoints += currentPlayer.gold;
-        currentPlayer.gold = 0;
-      }
+      // O ouro não gasto SE PERDE conforme regra.
+      currentPlayer.gold = 0;
     }
     
     const nextPlayer = this.nextPlayer();
@@ -175,6 +172,13 @@ class GameLogic {
 
     const diceCount = this.calculateDiceCount(player);
     player.dice = diceCount;
+    
+    // Regra hardcore: se o jogador conseguiu o direito de rolar mais de 1 dado, 
+    // ele 'paga' a dívida perdendo todo o cofre na hora! E volta para a estaca zero.
+    // Ignoramos extraDiceBonus (se vier de outros cantos), o cofre zera se os pontos dele geraram o dado extra.
+    if (player.savedPoints >= 4) {
+      player.savedPoints = 0;
+    }
     
     let totalGold = 0;
     const rolls = [];
