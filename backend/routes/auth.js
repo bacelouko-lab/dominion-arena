@@ -90,5 +90,19 @@ router.post('/login', async (req, res) => {
     }
   });
 });
+// ROTA PARA BUSCAR STATUS ATUALIZADO DO USUARIO
+router.get('/me/:id', async (req, res) => {
+  const { data: user, error } = await supabase
+    .from('users')
+    .select('id, username, email, elo, wins, losses')
+    .eq('id', req.params.id)
+    .single();
+
+  if (error || !user) {
+    return res.status(404).json({ error: 'Usuário não encontrado' });
+  }
+
+  res.json(user);
+});
 
 module.exports = router;

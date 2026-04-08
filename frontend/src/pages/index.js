@@ -13,10 +13,26 @@ export default function Home() {
   // Carregar usuário logado
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
+    const savedUserStr = localStorage.getItem('user');
     
-    if (token && savedUser) {
-      setUser(JSON.parse(savedUser));
+    if (token && savedUserStr) {
+      const savedUser = JSON.parse(savedUserStr);
+      setUser(savedUser);
+
+      // Buscar status mais recente no backend (para atualizar o ELO na tela)
+      if (savedUser.id) {
+        // Tenta usar a url da variável de ambiente, e faz fallback para a de prod.
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://dominion-arena-1.onrender.com';
+        fetch(`${apiUrl}/api/auth/me/${savedUser.id}`)
+          .then(res => res.json())
+          .then(freshUser => {
+            if (!freshUser.error) {
+              setUser(freshUser);
+              localStorage.setItem('user', JSON.stringify(freshUser));
+            }
+          })
+          .catch(err => console.error('Erro ao atualizar usuário:', err));
+      }
     } else {
       router.push('/login');
     }
