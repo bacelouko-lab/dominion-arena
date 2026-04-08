@@ -852,12 +852,14 @@ class GameLogic {
     
     if (hasSunPriest) {
       console.log(`☀️ Sacerdote do Sol: ${defender.username} anulou as sinergias do atacante!`);
-      defenderSynBonuses = { atkBonus: 0, defBonus: 0, directDamage: 0 };
+      attackerSynBonuses.atkBonus = 0;
+      attackerSynBonuses.directDamage = 0;
     }
     
     if (hasDesertNv6) {
       console.log(`🏜️ Deserto Nv6: ${defender.username} anulou sinergias do atacante!`);
-      defenderSynBonuses = { atkBonus: 0, defBonus: 0, directDamage: 0 };
+      attackerSynBonuses.atkBonus = 0;
+      attackerSynBonuses.directDamage = 0;
     }
     
     const attackerPassiveBonuses = this.applyPassiveAbilities(attacker);
@@ -897,14 +899,16 @@ class GameLogic {
     let damage = attackerTotalAtk - defenderTotalDef;
     if (damage < 0) damage = 0;
     
+    const hasAttackerCards = attacker.field.some(card => card !== null);
+    if (damage === 0 && hasAttackerCards) {
+      damage = 1;
+    }
+
     let totalDirectDamage = 0;
     if (attackerSynBonuses.directDamage) totalDirectDamage += attackerSynBonuses.directDamage;
     if (evolvedEffects.directDamage) totalDirectDamage += evolvedEffects.directDamage;
     
     damage += totalDirectDamage;
-    
-    const hasAttackerCards = attacker.field.some(card => card !== null);
-    if (damage === 0 && hasAttackerCards) damage = 1;
     
     const oldLife = defender.life;
     defender.life = Math.max(0, defender.life - damage);

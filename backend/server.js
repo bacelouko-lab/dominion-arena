@@ -519,6 +519,16 @@ io.on('connection', (socket) => {
           winner: { playerId: winner.playerId, username: winner.username }, 
           loser: { playerId: defender.playerId, username: defender.username } 
         });
+        
+        // Limpa o jogo da memória após 2 minutos para dar tempo dos jogadores verem a tela de fim
+        const finalGameId = socket.gameId;
+        setTimeout(() => {
+          if (games.has(finalGameId)) {
+            console.log(`🧹 Limpeza: Removendo jogo finalizado ${finalGameId} da memória.`);
+            games.delete(finalGameId);
+            readyPlayersMap.delete(finalGameId);
+          }
+        }, 120000); 
         return;
       } else {
         console.log(`⚠️ Jogador eliminado, mas jogo continua. Vivos: ${alivePlayers.length}`);
@@ -590,6 +600,12 @@ io.on('connection', (socket) => {
     if (gameId && playerId) {
       const game = games.get(gameId);
       if (game) {
+        // Se o jogo já acabou, não precisamos de timer de desconexão
+        if (game.phase === 'end') {
+          console.log(`ℹ️ Jogador ${playerId} saiu de um jogo finalizado.`);
+          return;
+        }
+
         if (game.turn === 0) {
           // Se ainda está no lobby, deleta pra sempre liberando a vaga
           delete game.players[playerId];
