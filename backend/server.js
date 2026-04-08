@@ -179,6 +179,62 @@ async function saveMatch(game, winnerId, loserId) {
     console.log(`✅ Perdedor atualizado: ${loser.username} - Losses: ${(loser.losses || 0) + 1}`);
   }
   
+  // ==========================================
+  // TELEMETRIA E BALANCEAMENTO (CARTAS E SINERGIAS)
+  // ==========================================
+  try {
+    const winnerPlayer = game.players[winnerId];
+    const loserPlayer = game.players[loserId];
+
+    if (winnerPlayer && loserPlayer) {
+      const processPlayerStats = async (player, isWin) => {
+        // Obter todas as cartas do jogador (Mão e Campo)
+        const allCards = [...player.field, ...player.hand].filter(c => c !== null);
+        
+        for (const card of allCards) {
+          const { error } = await supabase.rpc('increment_card_stats', {
+            p_card_id: card.id,
+            p_card_name: card.nome.replace(' (Evoluída)', ''),
+            p_is_win: isWin,
+            p_is_evolved: card.isEvolved || false
+          });
+          if (error) console.error(`❌ Erro RPC Cartas (${card.nome}):`, error.message);
+        }
+
+        // Processar Sinergias (usando as regions e classes ativas)
+        const synergies = player.synergies || { regions: {}, classes: {} };
+        
+        for (const [region, level] of Object.entries(synergies.regions)) {
+          if (level > 0) {
+            const { error } = await supabase.rpc('increment_synergy_stats', {
+              p_synergy_name: region,
+              p_level: level,
+              p_is_win: isWin
+            });
+            if (error) console.error(`❌ Erro RPC Sinergia (${region}):`, error.message);
+          }
+        }
+        for (const [classe, level] of Object.entries(synergies.classes)) {
+          if (level > 0) {
+            const { error } = await supabase.rpc('increment_synergy_stats', {
+              p_synergy_name: classe,
+              p_level: level,
+              p_is_win: isWin
+            });
+            if (error) console.error(`❌ Erro RPC Sinergia (${classe}):`, error.message);
+          }
+        }
+      };
+
+      await processPlayerStats(winnerPlayer, true);
+      await processPlayerStats(loserPlayer, false);
+      
+      console.log('📊 Telemetria de balanceamento salva com sucesso!');
+    }
+  } catch (metricsError) {
+    console.error('❌ Erro no processamento principal de telemetria:', metricsError);
+  }
+
   console.log('✅ saveMatch concluída!');
 }
 
