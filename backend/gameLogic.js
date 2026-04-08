@@ -388,12 +388,12 @@ class GameLogic {
 
     if (!choseShop) {
       const pointsToSave = player.gold;
-      // O player.gold já tem os savedPoints somados nele ali no rollDice! Usa '=' para não duplicar magicamente
-      player.savedPoints = pointsToSave;
+      // O ouro deve apenas SOMA no cofre
+      player.savedPoints += pointsToSave;
       player.gold = 0;
       this.phase = 'combat';
     } else {
-      player.savedPoints = 0;
+      // Deletado: O cofre não pode ser zerado ao abrir a aba shop!
       this.generateShop(playerId);
       this.phase = 'buy';
     }
