@@ -28,14 +28,16 @@ export default function Shop({ shopCards, onBuy, onReturnCard, gold }) {
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       style={{
-        background: 'rgba(0,0,0,0.6)',
+        background: 'rgba(10, 10, 10, 0.9)',
         padding: '20px',
         borderRadius: '15px',
-        border: '2px solid #444',
+        border: '1px solid #e94560',
+        boxShadow: '0 0 30px rgba(0,0,0,0.8)',
         margin: '10px 0',
-        overflow: 'visible',  // Permite que o zoom saia do container
+        overflow: 'visible',
         position: 'relative',
-        zIndex: 10
+        zIndex: 10,
+        backdropFilter: 'blur(10px)'
       }}
     >
       <div style={{ 
@@ -45,16 +47,17 @@ export default function Shop({ shopCards, onBuy, onReturnCard, gold }) {
         flexWrap: 'wrap',
         gap: '10px'
       }}>
-        <h2 style={{ color: '#ffd700', margin: 0, fontSize: 'clamp(18px, 5vw, 24px)' }}>🛒 MERCADO</h2>
+        <h2 style={{ color: '#e94560', margin: 0, fontSize: 'clamp(18px, 5vw, 24px)', textTransform: 'uppercase', letterSpacing: '2px' }}>🛒 Mercado de Guerra</h2>
         <div style={{ 
-          background: '#ffd700', 
-          color: '#000', 
+          background: '#e94560', 
+          color: '#fff', 
           padding: '5px 15px', 
-          borderRadius: '20px', 
+          borderRadius: '4px', 
           fontWeight: 'bold',
-          fontSize: 'clamp(14px, 4vw, 16px)'
+          fontSize: 'clamp(14px, 4vw, 16px)',
+          boxShadow: '0 0 10px rgba(233, 69, 96, 0.4)'
         }}>
-          🪙 OURO: {gold !== undefined ? gold : 0}
+          🪙 SEU OURO: {gold !== undefined ? gold : 0}
         </div>
       </div>
       
@@ -64,33 +67,34 @@ export default function Shop({ shopCards, onBuy, onReturnCard, gold }) {
         flexDirection: 'row',
         gap: '20px', 
         overflowX: 'auto',
-        overflowY: 'visible',  // Importante: permite o zoom vertical
-        padding: '60px 10px 40px 10px',  // Mais padding embaixo para o zoom
+        overflowY: 'visible',
+        padding: '60px 10px 40px 10px',
         WebkitOverflowScrolling: 'touch',
         scrollbarWidth: 'thin',
-        minHeight: '280px'  // Altura maior para o zoom
+        minHeight: '280px'
       }}>
         {cards.length === 0 ? (
-          <div style={{ color: '#666', textAlign: 'center', width: '100%', padding: '20px', minWidth: '200px' }}>
-            Nenhuma carta na loja no momento
+          <div style={{ color: '#444', textAlign: 'center', width: '100%', padding: '20px', minWidth: '200px' }}>
+            O mercado está vazio no momento...
           </div>
         ) : (
           cards.map((card, index) => (
             <div key={card.instanceId || index} style={{ 
               textAlign: 'center', 
-              minWidth: '140px',  // Ligeiramente maior
+              minWidth: '140px',
               flexShrink: 0,
               position: 'relative',
-              zIndex: 100  // Garante que o zoom fique acima
+              zIndex: 100
             }}>
               <Card card={card} onClick={() => onBuy && onBuy(card, index)} isShop={true} />
               <div style={{ 
-                marginTop: '10px', 
-                color: gold >= card.custo ? '#00ff00' : '#ff4d4d',
+                marginTop: '15px', 
+                color: gold >= card.custo ? '#ffcc00' : '#ff4d4d',
                 fontWeight: 'bold',
-                fontSize: 'clamp(12px, 3.5vw, 14px)'
+                fontSize: 'clamp(12px, 3.5vw, 14px)',
+                textShadow: '0 2px 4px rgba(0,0,0,0.5)'
               }}>
-                🪙 {card.custo}
+                💰 PREÇO: {card.custo}
               </div>
             </div>
           ))
@@ -99,11 +103,14 @@ export default function Shop({ shopCards, onBuy, onReturnCard, gold }) {
       
       <div style={{ 
         marginTop: '15px', 
-        fontSize: 'clamp(10px, 3vw, 12px)', 
-        color: '#888', 
-        textAlign: 'center' 
+        fontSize: 'clamp(10px, 3vw, 11px)', 
+        color: '#666', 
+        textAlign: 'center',
+        fontStyle: 'italic',
+        borderTop: '1px solid #222',
+        paddingTop: '10px'
       }}>
-        💡 Arraste uma carta do campo para a loja para devolver e receber o reembolso
+        💡 Dica: Arraste cartas do campo para cá para vendê-las e recuperar ouro
       </div>
     </div>
   );

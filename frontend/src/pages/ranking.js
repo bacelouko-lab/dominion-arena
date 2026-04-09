@@ -49,26 +49,46 @@ export default function Ranking() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f0f1b 0%, #1a1a2e 100%)' }}>
+    <div style={{ 
+      minHeight: '100vh', 
+      backgroundImage: 'url("/assets/login_bg.png")',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundAttachment: 'fixed',
+      position: 'relative'
+    }}>
+      {/* Overlay para escurecer */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.8)',
+        zIndex: 1
+      }}></div>
+
       {/* Header */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: '15px 30px',
-        background: '#1a1a2e',
-        borderBottom: '2px solid #e94560'
+        background: 'rgba(10, 10, 10, 0.95)',
+        borderBottom: '2px solid #e94560',
+        position: 'relative',
+        zIndex: 10
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ fontSize: '28px' }}>🏆</span>
-          <h1 style={{ fontSize: '24px', margin: 0, color: '#f39c12' }}>Ranking</h1>
+          <h1 style={{ fontSize: '24px', margin: 0, color: '#e94560', textTransform: 'uppercase', letterSpacing: '2px' }}>Ranking</h1>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <button
             onClick={() => router.push('/')}
             style={{
-              background: '#3498db',
-              border: 'none',
+              background: '#333',
+              border: '1px solid #e94560',
               padding: '8px 16px',
               borderRadius: '6px',
               color: 'white',
@@ -95,12 +115,14 @@ export default function Ranking() {
       </div>
 
       {/* Conteúdo do Ranking */}
-      <div style={{ padding: '30px', maxWidth: '800px', margin: '0 auto' }}>
+      <div style={{ padding: '30px', maxWidth: '800px', margin: '0 auto', position: 'relative', zIndex: 5 }}>
         <div style={{
-          background: '#1a1a2e',
+          background: 'rgba(15, 15, 15, 0.9)',
           borderRadius: '16px',
           border: '1px solid #e94560',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          boxShadow: '0 0 30px rgba(0,0,0,0.5)',
+          backdropFilter: 'blur(10px)'
         }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
@@ -120,19 +142,19 @@ export default function Ranking() {
                     background: player.username === user?.username ? '#e9456020' : 'transparent'
                   }}
                 >
-                  <td style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: '#f39c12' }}>
+                  <td style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: '#e94560' }}>
                     {index + 1}º
                   </td>
-                  <td style={{ padding: '12px', textAlign: 'left' }}>
+                  <td style={{ padding: '12px', textAlign: 'left', color: '#fff' }}>
                     {player.username}
                     {player.username === user?.username && (
-                      <span style={{ marginLeft: '10px', fontSize: '12px', color: '#f39c12' }}>(você)</span>
+                      <span style={{ marginLeft: '10px', fontSize: '12px', color: '#e94560' }}>(você)</span>
                     )}
                   </td>
-                  <td style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold' }}>
+                  <td style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: '#fff' }}>
                     {player.elo}
                   </td>
-                  <td style={{ padding: '12px', textAlign: 'center', fontSize: '14px' }}>
+                  <td style={{ padding: '12px', textAlign: 'center', fontSize: '14px', color: '#aaa' }}>
                     {player.wins || 0} / {player.losses || 0}
                   </td>
                 </tr>

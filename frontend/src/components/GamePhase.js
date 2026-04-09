@@ -13,29 +13,31 @@ export default function GamePhase({ phase, turn, currentPlayer }) {
 
   const getPhaseColor = () => {
     switch (phase) {
-      case 'roll': return '#f39c12';
-      case 'shop_decision': return '#e94560';
-      case 'buy': return '#3498db';
-      case 'position': return '#27ae60';
-      case 'combat': return '#e94560';
-      default: return '#95a5a6';
+      case 'roll': return '#e94560';
+      case 'shop_decision': return '#ff4d4d';
+      case 'buy': return '#e94560';
+      case 'position': return '#b30000';
+      case 'combat': return '#ff0000';
+      default: return '#444';
     }
   };
 
   return (
     <div style={{
-      background: '#2a2a3e',
+      background: 'rgba(10, 10, 10, 0.9)',
       padding: '15px',
       borderRadius: '8px',
       marginBottom: '15px',
       textAlign: 'center',
-      borderLeft: `4px solid ${getPhaseColor()}`
+      border: '1px solid #333',
+      borderBottom: `3px solid ${getPhaseColor()}`,
+      boxShadow: `0 4px 15px rgba(0,0,0,0.5)`
     }}>
-      <div style={{ fontSize: '18px', fontWeight: 'bold', color: getPhaseColor() }}>
+      <div style={{ fontSize: '18px', fontWeight: 'bold', color: getPhaseColor(), textTransform: 'uppercase', letterSpacing: '1px' }}>
         {getPhaseName()}
       </div>
-      <div style={{ fontSize: '14px', color: '#aaa', marginTop: '5px' }}>
-        Turno: {turn} | Jogador: {currentPlayer || '...'}
+      <div style={{ fontSize: '14px', color: '#fff', marginTop: '8px' }}>
+        🏟️ ROUND: <span style={{color: '#e94560'}}>{turn}</span> | 👤 ATUAL: <span style={{color: '#e94560'}}>{currentPlayer || '...'}</span>
       </div>
     </div>
   );

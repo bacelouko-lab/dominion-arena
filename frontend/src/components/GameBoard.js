@@ -440,15 +440,15 @@ export default function GameBoard({ gameState, gameId, username }) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
         <div className="card" style={{ textAlign: 'center', maxWidth: '500px', padding: '30px' }}>
-          <h2>🎲 Você rolou {currentPlayer.dice || 1} dado(s)!</h2>
-          <h3>⭐ Pontos: {currentPlayer.gold || 0}</h3>
-          <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#2a2a3e', borderRadius: '8px' }}>
-            <div>💾 Pontos guardados: {currentPlayer.savedPoints || 0}</div>
-            <div>🎲 Próximo turno: {nextTurnDice} dado(s)</div>
+          <h2 style={{ textAlign: 'center', marginBottom: '20px', color: '#e94560', textTransform: 'uppercase' }}>🎲 Você rolou {currentPlayer.dice || 1} dado(s)!</h2>
+          <h3 style={{ color: '#fff' }}>⭐ Pontos: {currentPlayer.gold || 0}</h3>
+          <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#111', border: '1px solid #444', borderRadius: '8px' }}>
+            <div style={{ color: '#aaa' }}>💾 Pontos guardados: {currentPlayer.savedPoints || 0}</div>
+            <div style={{ color: '#e94560', fontWeight: 'bold' }}>🎲 Próximo turno: {nextTurnDice} dado(s)</div>
           </div>
           <div style={{ display: 'flex', gap: '20px', marginTop: '30px' }}>
-            <button onClick={() => chooseShopOption(true)} style={{ padding: '15px 30px', cursor: 'pointer' }}>🛒 Ver Loja e Comprar</button>
-            <button onClick={() => chooseShopOption(false)} style={{ padding: '15px 30px', background: '#f39c12', cursor: 'pointer' }}>💾 Guardar Pontos</button>
+            <button onClick={() => chooseShopOption(true)} style={{ padding: '15px 30px', cursor: 'pointer', background: '#e94560' }}>🛒 Loja de Armas</button>
+            <button onClick={() => chooseShopOption(false)} style={{ padding: '15px 30px', background: '#333', border: '1px solid #e94560', cursor: 'pointer' }}>💾 Guardar Pontos</button>
           </div>
           <div style={{ marginTop: '15px', fontSize: '12px', color: '#888' }}>
             ⚠️ Pontos não gastos na loja serão perdidos
@@ -460,13 +460,32 @@ export default function GameBoard({ gameState, gameId, username }) {
 
   return (
     <div 
-      style={{ position: 'relative' }}
+      style={{ 
+        position: 'relative',
+        minHeight: '100vh',
+        backgroundImage: 'url("/assets/board_bg.png")',
+        backgroundSize: '800px', // Textura repetida ou ajustada
+        backgroundRepeat: 'repeat',
+        backgroundColor: '#000'
+      }}
       onClick={() => {
         // Garantia extra: qualquer clique no tabuleiro tenta desbloquear o som
         if (!soundManager.initialized) soundManager.unlock();
       }}
     >
-      {/* Botão de Som */}
+      {/* Overlay para dar profundidade */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'radial-gradient(circle, transparent 20%, rgba(0,0,0,0.4) 100%)',
+        pointerEvents: 'none',
+        zIndex: 1
+      }}></div>
+
+      <div style={{ position: 'relative', zIndex: 2, padding: '20px' }}>
       <button 
         onClick={toggleMute}
         style={{
@@ -578,15 +597,17 @@ export default function GameBoard({ gameState, gameId, username }) {
             </button>
           )}
           
-          {hasOracle && isMyTurnAndAlive && phase === 'roll' && hasRolled && rerollsRemaining > 0 && (
+          {isMyTurnAndAlive && phase === 'roll' && hasRolled && rerollsRemaining > 0 && (
             <button 
               onClick={rerollDice}
               style={{ 
                 width: '100%', 
                 marginBottom: '10px', 
-                background: '#1e90ff', 
+                background: '#333',
+                border: '1px solid #e94560', 
                 cursor: 'pointer',
-                padding: '10px'
+                padding: '10px',
+                color: '#fff'
               }}
             >
               🔄 Rerrolar Dados ({rerollsRemaining}/2)
@@ -595,18 +616,18 @@ export default function GameBoard({ gameState, gameId, username }) {
           
           {isMyTurnAndAlive && phase === 'buy' && (
             <>
-              <button onClick={rerollShop} disabled={currentPlayerObj?.gold < 1} style={{ width: '100%', marginBottom: '10px', cursor: 'pointer' }}>
+              <button onClick={rerollShop} disabled={currentPlayerObj?.gold < 1} style={{ width: '100%', marginBottom: '10px', cursor: 'pointer', background: '#222', border: '1px solid #444' }}>
                 🔄 Reroll Loja (1 ponto)
               </button>
-              <button onClick={finishShopping} style={{ width: '100%', marginBottom: '10px', background: '#3498db', cursor: 'pointer' }}>
+              <button onClick={finishShopping} style={{ width: '100%', marginBottom: '10px', background: '#e94560', cursor: 'pointer' }}>
                 ✅ Finalizar Compras
               </button>
             </>
           )}
           
           {isMyTurnAndAlive && phase === 'position' && (
-            <button onClick={finishPositioning} style={{ width: '100%', marginBottom: '10px', background: '#27ae60', cursor: 'pointer' }}>
-              ⚔️ Finalizar Posicionamento
+            <button onClick={finishPositioning} style={{ width: '100%', marginBottom: '10px', background: '#b30000', cursor: 'pointer' }}>
+              ⚔️ Confirmar Estratégia
             </button>
           )}
           

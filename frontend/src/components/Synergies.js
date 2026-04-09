@@ -97,16 +97,16 @@ export default function Synergies({ synergies }) {
 
   if (activeEffects.length === 0) {
     return (
-      <div style={{ marginTop: '10px', background: '#0a0a1a', padding: '15px', borderRadius: '8px' }}>
-        <h4>🔗 Sinergias Ativas</h4>
+      <div style={{ marginTop: '10px', background: 'rgba(10, 10, 10, 0.8)', border: '1px solid #333', padding: '15px', borderRadius: '8px' }}>
+        <h4 style={{ color: '#e94560', textTransform: 'uppercase', fontSize: '14px', marginBottom: '10px' }}>🔗 Sinergias Ativas</h4>
         <p style={{ fontSize: '12px', color: '#666' }}>Nenhuma sinergia ativa</p>
       </div>
     );
   }
 
   return (
-    <div style={{ marginTop: '10px', background: '#0a0a1a', padding: '15px', borderRadius: '8px' }}>
-      <h4>🔗 Sinergias Ativas</h4>
+    <div style={{ marginTop: '10px', background: 'rgba(10, 10, 10, 0.8)', border: '1px solid #e94560', padding: '15px', borderRadius: '8px', boxShadow: '0 0 15px rgba(233, 69, 96, 0.2)' }}>
+      <h4 style={{ color: '#e94560', textTransform: 'uppercase', fontSize: '14px', marginBottom: '10px' }}>🔗 Sinergias Ativas</h4>
       
       {(totalAtkBonus > 0 || totalDefBonus > 0) && (
         <div style={{ 
@@ -114,21 +114,22 @@ export default function Synergies({ synergies }) {
           justifyContent: 'center', 
           gap: '20px', 
           marginTop: '10px',
-          padding: '8px',
-          backgroundColor: '#2a2a3e',
+          padding: '10px',
+          backgroundColor: '#000',
+          border: '1px solid #333',
           borderRadius: '8px'
         }}>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#e94560' }}>
+            <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#ff4d4d' }}>
               +{totalAtkBonus}
             </div>
-            <div style={{ fontSize: '11px', color: '#aaa' }}>ATK Extra</div>
+            <div style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase' }}>ATK Extra</div>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#3498db' }}>
+            <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#fff' }}>
               +{totalDefBonus}
             </div>
-            <div style={{ fontSize: '11px', color: '#aaa' }}>DEF Extra</div>
+            <div style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase' }}>DEF Extra</div>
           </div>
         </div>
       )}
@@ -137,19 +138,20 @@ export default function Synergies({ synergies }) {
         {activeEffects.map((effect, idx) => (
           <div key={idx} style={{ 
             fontSize: '11px', 
-            color: '#ffd700', 
-            marginBottom: '4px',
-            padding: '2px 5px',
-            background: 'rgba(255,215,0,0.1)',
-            borderRadius: '4px'
+            color: '#fff', 
+            marginBottom: '6px',
+            padding: '4px 8px',
+            background: 'rgba(233, 69, 96, 0.15)',
+            borderLeft: '3px solid #e94560',
+            borderRadius: '2px'
           }}>
-            ✨ {effect}
+            <span style={{color: '#ff4d4d', marginRight: '5px'}}>✨</span> {effect}
           </div>
         ))}
       </div>
       
-      <p style={{ fontSize: '10px', color: '#888', marginTop: '12px', textAlign: 'center' }}>
-        ✅ Bônus aplicados automaticamente no combate
+      <p style={{ fontSize: '10px', color: '#666', marginTop: '15px', textAlign: 'center', fontStyle: 'italic' }}>
+        ⚠️ Bônus calculados durante o combate
       </p>
     </div>
   );

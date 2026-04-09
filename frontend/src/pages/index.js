@@ -106,19 +106,39 @@ export default function Home() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f0f1b 0%, #1a1a2e 100%)' }}>
+    <div style={{ 
+      minHeight: '100vh', 
+      backgroundImage: 'url("/assets/login_bg.png")',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundAttachment: 'fixed',
+      position: 'relative'
+    }}>
+      {/* Overlay para escurecer */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.7)',
+        zIndex: 1
+      }}></div>
+
       {/* Header com nome do usuário */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: '15px 30px',
-        background: '#1a1a2e',
-        borderBottom: '2px solid #e94560'
+        background: 'rgba(10, 10, 10, 0.95)',
+        borderBottom: '2px solid #e94560',
+        position: 'relative',
+        zIndex: 10
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ fontSize: '28px' }}>🐉</span>
-          <h1 style={{ fontSize: '24px', margin: 0, color: '#f39c12' }}>Dominion Arena</h1>
+          <h1 style={{ fontSize: '24px', margin: 0, color: '#e94560', textTransform: 'uppercase', letterSpacing: '2px' }}>Dominion Arena</h1>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <button
@@ -130,11 +150,13 @@ export default function Home() {
               borderRadius: '6px',
               color: '#000',
               cursor: 'pointer',
-              fontWeight: 'bold'
+              fontWeight: 'bold',
+              boxShadow: '0 0 10px rgba(243, 156, 18, 0.3)'
             }}
           >
             🏆 Ranking
           </button>
+
           <span style={{ color: '#fff' }}>👤 {user.username}</span>
           <span style={{ color: '#f39c12' }}>⭐ ELO: {user.elo || 1200}</span>
           <button
@@ -154,24 +176,26 @@ export default function Home() {
       </div>
 
       {/* Conteúdo principal */}
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh', padding: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh', padding: '20px', position: 'relative', zIndex: 5 }}>
         <div style={{
           maxWidth: '500px',
           width: '100%',
-          background: '#1a1a2e',
+          background: 'rgba(15, 15, 15, 0.9)',
           borderRadius: '16px',
           padding: '30px',
-          border: '1px solid rgba(233,69,96,0.3)'
+          border: '1px solid rgba(233,69,96,0.5)',
+          boxShadow: '0 0 40px rgba(0,0,0,0.8)',
+          backdropFilter: 'blur(12px)'
         }}>
-          <h2 style={{ textAlign: 'center', marginBottom: '20px', color: '#f39c12' }}>⚔️ Dominion Arena Tática</h2>
-          <p style={{ textAlign: 'center', color: '#aaa', marginBottom: '25px' }}>
+          <h2 style={{ textAlign: 'center', marginBottom: '20px', color: '#e94560', textTransform: 'uppercase' }}>⚔️ Dominion Arena Tática</h2>
+          <p style={{ textAlign: 'center', color: '#bbb', marginBottom: '25px' }}>
             Jogo estratégico de cartas com evolução, combate automático e sinergias
           </p>
 
-          {error && <div style={{ color: '#e94560', textAlign: 'center', marginBottom: '15px' }}>{error}</div>}
+          {error && <div style={{ color: '#e94560', textAlign: 'center', marginBottom: '15px', fontWeight: 'bold' }}>{error}</div>}
 
           <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', color: '#ddd' }}>Nome do Jogador</label>
+            <label style={{ display: 'block', marginBottom: '5px', color: '#eee' }}>Nome do Jogador</label>
             <input
               type="text"
               value={username}
@@ -182,7 +206,7 @@ export default function Home() {
                 padding: '12px',
                 borderRadius: '8px',
                 border: '1px solid #444',
-                background: '#2a2a3e',
+                background: '#111',
                 color: 'white'
               }}
             />
@@ -194,7 +218,7 @@ export default function Home() {
             style={{
               width: '100%',
               padding: '16px 12px',
-              background: 'linear-gradient(90deg, #f39c12, #e67e22)',
+              background: 'linear-gradient(90deg, #e94560, #b30000)',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
@@ -202,14 +226,15 @@ export default function Home() {
               fontWeight: 'bold',
               cursor: loading ? 'not-allowed' : 'pointer',
               marginBottom: '15px',
-              boxShadow: '0 4px 15px rgba(243, 156, 18, 0.4)'
+              boxShadow: '0 4px 15px rgba(233, 69, 96, 0.4)',
+              transition: 'transform 0.2s'
             }}
           >
             {loading ? 'Buscando...' : '🕹️ Procurar Partida Pública'}
           </button>
 
-          <div style={{ textAlign: 'center', margin: '20px 0', color: '#666', borderBottom: '1px solid #333', lineHeight: '0.1em' }}>
-            <span style={{ background: '#1a1a2e', padding: '0 10px' }}>Salas Privadas</span>
+          <div style={{ textAlign: 'center', margin: '20px 0', color: '#888', borderBottom: '1px solid #333', lineHeight: '0.1em' }}>
+            <span style={{ background: '#111', padding: '0 10px' }}>Salas Privadas</span>
           </div>
 
           <button
@@ -218,9 +243,9 @@ export default function Home() {
             style={{
               width: '100%',
               padding: '12px',
-              background: '#e94560',
-              color: 'white',
-              border: 'none',
+              background: 'transparent',
+              color: '#e94560',
+              border: '2px solid #e94560',
               borderRadius: '8px',
               fontSize: '16px',
               fontWeight: 'bold',
@@ -234,7 +259,7 @@ export default function Home() {
           <div style={{ textAlign: 'center', margin: '15px 0', color: '#666' }}>OU</div>
 
           <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', color: '#ddd' }}>ID da Sala</label>
+            <label style={{ display: 'block', marginBottom: '5px', color: '#eee' }}>ID da Sala</label>
             <input
               type="text"
               value={gameId}
@@ -245,7 +270,7 @@ export default function Home() {
                 padding: '12px',
                 borderRadius: '8px',
                 border: '1px solid #444',
-                background: '#2a2a3e',
+                background: '#111',
                 color: 'white'
               }}
             />
@@ -257,7 +282,7 @@ export default function Home() {
             style={{
               width: '100%',
               padding: '12px',
-              background: '#3498db',
+              background: '#333',
               color: 'white',
               border: 'none',
               borderRadius: '8px',

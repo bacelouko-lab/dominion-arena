@@ -16,8 +16,14 @@ export default function Card({ card, onClick, isShop = false }) {
       <div 
         className={`dominion-card ${card.regiao.toLowerCase()}`}
         onClick={() => onClick && onClick(card)}
-        onMouseEnter={() => setIsZoomed(true)}
-        onMouseLeave={() => setIsZoomed(false)}
+        onMouseEnter={() => {
+          setIsZoomed(true);
+          setShowTooltip(true);
+        }}
+        onMouseLeave={() => {
+          setIsZoomed(false);
+          setShowTooltip(false);
+        }}
         style={{
           position: 'relative',
           cursor: 'pointer',
@@ -28,7 +34,7 @@ export default function Card({ card, onClick, isShop = false }) {
           transition: 'transform 0.2s ease-in-out, z-index 0.2s',
           zIndex: isZoomed ? 1000 : 1,
           transform: isZoomed ? 'scale(1.8)' : 'scale(1)',
-          boxShadow: isZoomed ? '0 10px 30px rgba(0,0,0,0.5)' : 'none'
+          boxShadow: isZoomed ? '0 10px 40px rgba(0,0,0,0.8)' : 'none'
         }}
       >
         <img 
@@ -39,10 +45,11 @@ export default function Card({ card, onClick, isShop = false }) {
             height: '100%', 
             objectFit: 'contain', 
             borderRadius: '8px',
-            boxShadow: '0 4px 8px rgba(0,0,0,0.5)'
+            boxShadow: '0 4px 8px rgba(0,0,0,0.5)',
+            border: card.isEvolved ? '2px solid #ff4d4d' : '1px solid #333'
           }} 
           onError={(e) => {
-            e.target.src = `https://via.placeholder.com/130x190?text=${card.nome?.slice(0, 10)}`;
+            e.target.src = `https://via.placeholder.com/130x190/000000/e94560?text=${card.nome?.slice(0, 10)}`;
           }}
         />
 
@@ -53,28 +60,31 @@ export default function Card({ card, onClick, isShop = false }) {
             bottom: '105%',
             left: '50%',
             transform: 'translateX(-50%)',
-            width: '220px',
-            background: 'rgba(15, 15, 35, 0.95)',
+            width: '240px',
+            background: 'rgba(10, 10, 10, 0.95)',
             color: 'white',
             padding: '12px',
             borderRadius: '8px',
             fontSize: '13px',
-            border: '2px solid #ffd700',
-            boxShadow: '0 10px 20px rgba(0,0,0,0.8)',
+            border: '2px solid #e94560',
+            boxShadow: '0 10px 30px rgba(0,0,0,1)',
             pointerEvents: 'none',
-            zIndex: 1001
+            zIndex: 1001,
+            backdropFilter: 'blur(10px)'
           }}>
-            <div style={{ color: '#ffd700', fontWeight: 'bold', borderBottom: '1px solid #444', marginBottom: '8px' }}>
-              ✨ INFORMAÇÕES
+            <div style={{ color: '#e94560', fontWeight: 'bold', borderBottom: '1px solid #333', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+              ⚔️ {card.nome}
             </div>
-            <p style={{ margin: 0, lineHeight: '1.4' }}>
-              <strong>{card.nome}</strong><br />
-              ⚔️ ATK: {card.atk} | 🛡️ DEF: {card.def}<br />
-              💰 Custo: {card.custo}<br />
-              📍 {card.regiao} • {card.classe}
-            </p>
-            <div style={{ marginTop: '8px', fontSize: '11px', color: '#aaa', fontStyle: 'italic' }}>
-              {card.evolucao || 'Sem habilidade especial'}
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span>⚔️ <span style={{color: '#ff4d4d'}}>{card.atk}</span></span>
+              <span>🛡️ <span style={{color: '#fff'}}>{card.def}</span></span>
+              <span>💰 <span style={{color: '#ffcc00'}}>{card.custo}</span></span>
+            </div>
+            <div style={{ fontSize: '11px', color: '#aaa', borderTop: '1px solid #333', paddingTop: '8px' }}>
+              <span style={{color: '#e94560'}}>Habilidade:</span> {card.evolucao || 'Nenhuma habilidade passiva'}
+            </div>
+            <div style={{ marginTop: '5px', fontSize: '10px', color: '#666' }}>
+              {card.regiao} • {card.classe}
             </div>
           </div>
         )}
@@ -83,7 +93,7 @@ export default function Card({ card, onClick, isShop = false }) {
           position: 'absolute',
           top: '-5px',
           right: '-5px',
-          background: '#ffd700',
+          background: '#ffcc00',
           color: '#000',
           borderRadius: '50%',
           width: '24px',
@@ -93,7 +103,8 @@ export default function Card({ card, onClick, isShop = false }) {
           justifyContent: 'center',
           fontWeight: 'bold',
           fontSize: '12px',
-          border: '1px solid #000'
+          border: '1px solid #000',
+          boxShadow: '0 0 10px rgba(255, 204, 0, 0.3)'
         }}>
           {card.custo}
         </div>

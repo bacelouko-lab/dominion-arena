@@ -2,50 +2,50 @@ export default function PlayerStats({ player }) {
   if (!player) return null;
 
   return (
-    <div className="card">
-      <h3>{player.username}</h3>
+    <div className="card" style={{ background: 'rgba(20, 20, 20, 0.8)', border: '1px solid #e94560', boxShadow: '0 0 15px rgba(233, 69, 96, 0.2)' }}>
+      <h3 style={{ color: '#e94560', textTransform: 'uppercase', marginBottom: '15px' }}>{player.username}</h3>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '10px' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '24px', color: '#e74c3c' }}>❤️</div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold' }}>{player.life}</div>
-          <div style={{ fontSize: '12px', color: '#95a5a6' }}>Vidas</div>
+        <div style={{ textAlign: 'center', background: '#000', padding: '8px', borderRadius: '8px', border: '1px solid #333' }}>
+          <div style={{ fontSize: '20px', color: '#ff4d4d' }}>❤️</div>
+          <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{player.life}</div>
+          <div style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase' }}>Vidas</div>
         </div>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '24px', color: '#f39c12' }}>💰</div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold' }}>{player.gold}</div>
-          <div style={{ fontSize: '12px', color: '#95a5a6' }}>Ouro</div>
+        <div style={{ textAlign: 'center', background: '#000', padding: '8px', borderRadius: '8px', border: '1px solid #333' }}>
+          <div style={{ fontSize: '20px', color: '#ffcc00' }}>💰</div>
+          <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{player.gold}</div>
+          <div style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase' }}>Ouro</div>
         </div>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '24px', color: '#3498db' }}>🎲</div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold' }}>{player.dice}</div>
-          <div style={{ fontSize: '12px', color: '#95a5a6' }}>Dados</div>
+        <div style={{ textAlign: 'center', background: '#000', padding: '8px', borderRadius: '8px', border: '1px solid #333' }}>
+          <div style={{ fontSize: '20px', color: '#e94560' }}>🎲</div>
+          <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{player.dice}</div>
+          <div style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase' }}>Dados</div>
         </div>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '24px', color: '#9b59b6' }}>🏦</div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold' }}>{player.savedPoints || 0}</div>
-          <div style={{ fontSize: '12px', color: '#95a5a6' }}>Cofre</div>
+        <div style={{ textAlign: 'center', background: '#000', padding: '8px', borderRadius: '8px', border: '1px solid #333' }}>
+          <div style={{ fontSize: '20px', color: '#b30000' }}>🏦</div>
+          <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{player.savedPoints || 0}</div>
+          <div style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase' }}>Cofre</div>
         </div>
       </div>
-      <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #34495e' }}>
-        <p style={{ fontSize: '12px' }}>Cartas na mão: {player.hand?.length || 0}/5</p>
-        <p style={{ fontSize: '12px' }}>Cartas no campo: {player.field?.filter(c => c)?.length || 0}/6</p>
+      <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #333' }}>
+        <p style={{ fontSize: '12px', color: '#ccc' }}>🃏 Cartas na mão: <span style={{color: '#fff'}}>{player.hand?.length || 0}/5</span></p>
+        <p style={{ fontSize: '12px', color: '#ccc' }}>⚔️ No campo: <span style={{color: '#fff'}}>{player.field?.filter(c => c)?.length || 0}/6</span></p>
         
         {player.consecutiveSaves > 0 && (
           <div style={{ 
             marginTop: '10px', 
             padding: '5px 10px', 
-            background: player.consecutiveSaves >= 2 ? '#2ecc7133' : '#34495e',
+            background: player.consecutiveSaves >= 2 ? '#ff4d4d20' : '#111',
             borderRadius: '4px',
             fontSize: '11px',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            border: player.consecutiveSaves >= 2 ? '1px solid #2ecc71' : '1px solid transparent'
+            border: player.consecutiveSaves >= 2 ? '1px solid #ff4d4d' : '1px solid #333'
           }}>
             <span style={{ filter: player.consecutiveSaves >= 2 ? 'none' : 'grayscale(1)' }}>🍀</span>
             {player.consecutiveSaves >= 2 
-              ? <strong style={{color: '#2ecc71'}}>Proteção contra Azar Ativa! (+1 Dado)</strong>
-              : <span>Proteção contra Azar: {player.consecutiveSaves}/2</span>
+              ? <strong style={{color: '#ff4d4d'}}>Proteção Ativa! (+1 Dado)</strong>
+              : <span style={{color: '#aaa'}}>Proteção contra Azar: {player.consecutiveSaves}/2</span>
             }
           </div>
         )}

@@ -54,18 +54,35 @@ export default function Login() {
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      background: 'linear-gradient(135deg, #0f0f1b 0%, #1a1a2e 100%)'
+      backgroundImage: 'url("/assets/login_bg.png")',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      position: 'relative'
     }}>
+      {/* Overlay para escurecer um pouco e melhorar contraste */}
       <div style={{
-        background: '#1a1a2e',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.6)',
+        zIndex: 1
+      }}></div>
+
+      <div style={{
+        background: 'rgba(10, 10, 10, 0.9)',
         padding: '40px',
         borderRadius: '16px',
         width: '100%',
         maxWidth: '400px',
-        border: '1px solid #e94560'
+        border: '1px solid #e94560',
+        boxShadow: '0 0 30px rgba(233, 69, 96, 0.3)',
+        zIndex: 2,
+        backdropFilter: 'blur(10px)'
       }}>
-        <h1 style={{ textAlign: 'center', color: '#f39c12', marginBottom: '30px' }}>
-          {isLogin ? '🔐 Entrar' : '📝 Criar Conta'}
+        <h1 style={{ textAlign: 'center', color: '#e94560', marginBottom: '30px', textTransform: 'uppercase', letterSpacing: '2px' }}>
+          {isLogin ? '🔴 Entrar' : '📝 Criar Conta'}
         </h1>
 
         {error && (

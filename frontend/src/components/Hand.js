@@ -33,15 +33,16 @@ export default function Hand({ hand, gameId, isDraggable = false, onDragStart, o
 
   return (
     <div style={{ marginTop: '20px' }}>
-      <h3>🃏 Mão ({hand.length}/7)</h3>
+      <h3 style={{ color: '#fff', textTransform: 'uppercase', fontSize: '14px', marginBottom: '15px', letterSpacing: '1px' }}>🃏 Suas Cartas</h3>
       <div style={{
         display: 'flex',
         gap: '15px',
         overflowX: 'auto',
         padding: '15px',
-        backgroundColor: '#1a1a2e',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
         borderRadius: '8px',
-        minHeight: '220px'
+        minHeight: '220px',
+        border: '1px solid #222'
       }}>
         {hand.map((card, index) => (
           <div
@@ -50,52 +51,54 @@ export default function Hand({ hand, gameId, isDraggable = false, onDragStart, o
             onDragStart={(e) => handleDragStart(e, index)}
             onClick={() => handleClick(card, index)}
             style={{
-              backgroundColor: card.isEvolved ? '#2a1a3e' : '#2a2a3e',
-              border: card.isEvolved ? '3px solid #f39c12' : '2px solid #e94560',
+              backgroundColor: '#111',
+              border: card.isEvolved ? '2px solid #ff4d4d' : '1px solid #e94560',
               borderRadius: '12px',
               padding: '12px',
               minWidth: '160px',
               maxWidth: '180px',
               cursor: isDraggable ? 'grab' : 'pointer',
               transition: 'all 0.2s',
-              position: 'relative'
+              position: 'relative',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.5)'
             }}
           >
             <div style={{ 
               fontWeight: 'bold', 
               fontSize: '14px', 
               textAlign: 'center', 
-              color: '#f39c12', 
+              color: '#e94560', 
               marginBottom: '8px', 
-              borderBottom: '1px solid #e94560', 
-              paddingBottom: '5px'
+              borderBottom: '1px solid #333', 
+              paddingBottom: '5px',
+              textTransform: 'uppercase'
             }}>
               {card.nome?.length > 20 ? card.nome?.slice(0, 20) + '...' : card.nome}
-              {card.isEvolved && <span style={{ fontSize: '10px', marginLeft: '5px' }}>✨</span>}
+              {card.isEvolved && <span style={{ fontSize: '10px', marginLeft: '5px', color: '#ffcc00' }}>✨</span>}
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px', color: '#fff' }}>
               <span>⚔️ <strong>{card.atk}</strong></span>
               <span>🛡️ <strong>{card.def}</strong></span>
-              <span>💰 <strong>{card.custo}</strong></span>
+              <span>💰 <strong style={{color: '#ffcc00'}}>{card.custo}</strong></span>
             </div>
-            <div style={{ fontSize: '10px', textAlign: 'center', color: '#aaa', marginBottom: '8px' }}>
+            <div style={{ fontSize: '10px', textAlign: 'center', color: '#888', marginBottom: '8px', textTransform: 'uppercase' }}>
               {card.classe} • {card.regiao}
             </div>
             <div style={{ 
               fontSize: '10px', 
-              color: card.isEvolved ? '#f39c12' : '#888', 
+              color: card.isEvolved ? '#ffcc00' : '#aaa', 
               textAlign: 'center', 
-              borderTop: '1px solid #333', 
+              borderTop: '1px solid #222', 
               paddingTop: '8px', 
               marginTop: '5px', 
               lineHeight: '1.3'
             }}>
               {card.isEvolved 
-                ? `✨ ${card.evolucao?.slice(0, 40) || 'Habilidade ativada'} ✨` 
+                ? `🏆 ${card.evolucao?.slice(0, 40) || 'Habilidade de ELITE'} 🏆` 
                 : card.evolucao?.slice(0, 40) || 'Sem habilidade'}
             </div>
             {isDraggable && (
-              <div style={{ fontSize: '9px', color: '#888', marginTop: '8px', textAlign: 'center' }}>
+              <div style={{ fontSize: '9px', color: '#666', marginTop: '8px', textAlign: 'center', fontStyle: 'italic' }}>
                 🖱️ Arraste para o campo
               </div>
             )}

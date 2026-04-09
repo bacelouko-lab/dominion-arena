@@ -27,39 +27,42 @@ export default function Opponents({ opponents, currentUsername, gameId }) {
             key={idx}
             onClick={() => viewOpponentBoard(opponent)}
             style={{
-              background: 'linear-gradient(135deg, #2a2a3e 0%, #1a1a2e 100%)',
+              background: 'rgba(15, 15, 15, 0.9)',
               border: '2px solid #e94560',
               borderRadius: '8px',
               padding: '15px',
               cursor: 'pointer',
               transition: 'all 0.3s',
-              position: 'relative'
+              position: 'relative',
+              boxShadow: '0 0 10px rgba(233, 69, 96, 0.1)'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-3px)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(233, 69, 96, 0.3)';
+              e.currentTarget.style.boxShadow = '0 0 20px rgba(233, 69, 96, 0.4)';
+              e.currentTarget.style.borderColor = '#ff4d4d';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'none';
+              e.currentTarget.style.boxShadow = '0 0 10px rgba(233, 69, 96, 0.1)';
+              e.currentTarget.style.borderColor = '#e94560';
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h3 style={{ margin: 0, color: '#f39c12' }}>{opponent.username}</h3>
-                <div style={{ fontSize: '14px', color: '#aaa', marginTop: '5px' }}>
+                <h3 style={{ margin: 0, color: '#e94560', textTransform: 'uppercase', fontSize: '16px' }}>{opponent.username}</h3>
+                <div style={{ fontSize: '14px', color: '#fff', marginTop: '5px' }}>
                   ❤️ Vida: {opponent.life}
                 </div>
-                <div style={{ fontSize: '12px', color: '#888', marginTop: '5px' }}>
-                  🃏 Cartas no campo: {opponent.field?.filter(c => c !== null).length || 0}/6
+                <div style={{ fontSize: '12px', color: '#aaa', marginTop: '5px' }}>
+                  🃏 Campo: {opponent.field?.filter(c => c !== null).length || 0}/6
                 </div>
                 {opponent.consecutiveSaves >= 2 && (
-                  <div style={{ fontSize: '12px', color: '#2ecc71', marginTop: '5px', fontWeight: 'bold' }}>
+                  <div style={{ fontSize: '11px', color: '#ff4d4d', marginTop: '5px', fontWeight: 'bold' }}>
                     🍀 Proteção Ativa!
                   </div>
                 )}
               </div>
-              <div style={{ fontSize: '24px' }}>👁️</div>
+              <div style={{ fontSize: '24px', opacity: 0.7 }}>👁️</div>
             </div>
           </div>
         ))}
@@ -74,25 +77,26 @@ export default function Opponents({ opponents, currentUsername, gameId }) {
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'rgba(0, 0, 0, 0.8)',
+            background: 'rgba(0, 0, 0, 0.85)',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
             zIndex: 2000,
-            backdropFilter: 'blur(5px)'
+            backdropFilter: 'blur(8px)'
           }}
           onClick={closeModal}
         >
           <div
             style={{
-              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-              border: '3px solid #f39c12',
+              background: 'rgba(10, 10, 10, 0.95)',
+              border: '2px solid #e94560',
               borderRadius: '16px',
               padding: '25px',
               maxWidth: '90vw',
               maxHeight: '85vh',
               overflowY: 'auto',
-              position: 'relative'
+              position: 'relative',
+              boxShadow: '0 0 50px rgba(0,0,0,1)'
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -118,8 +122,8 @@ export default function Opponents({ opponents, currentUsername, gameId }) {
               ✕
             </button>
 
-            <h2 style={{ textAlign: 'center', marginBottom: '20px', color: '#f39c12' }}>
-              🎮 {selectedOpponent.username}
+            <h2 style={{ textAlign: 'center', marginBottom: '20px', color: '#e94560', textTransform: 'uppercase' }}>
+              ⚔️ {selectedOpponent.username}
             </h2>
 
             {/* Status do oponente */}
@@ -129,28 +133,29 @@ export default function Opponents({ opponents, currentUsername, gameId }) {
               gap: '10px',
               marginBottom: '20px',
               padding: '15px',
-              background: '#2a2a3e',
+              background: '#000',
+              border: '1px solid #333',
               borderRadius: '8px'
             }}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '24px' }}>❤️</div>
+                <div style={{ fontSize: '24px', color: '#ff4d4d' }}>❤️</div>
                 <div style={{ fontWeight: 'bold' }}>{selectedOpponent.life}</div>
-                <div style={{ fontSize: '12px', color: '#aaa' }}>Vida</div>
+                <div style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase' }}>Vida</div>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '24px' }}>🃏</div>
+                <div style={{ fontSize: '24px', color: '#fff' }}>🃏</div>
                 <div style={{ fontWeight: 'bold' }}>{selectedOpponent.field?.filter(c => c !== null).length || 0}/6</div>
-                <div style={{ fontSize: '12px', color: '#aaa' }}>Cartas em Campo</div>
+                <div style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase' }}>Campo</div>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '24px' }}>💰</div>
+                <div style={{ fontSize: '24px', color: '#ffcc00' }}>💰</div>
                 <div style={{ fontWeight: 'bold' }}>{selectedOpponent.gold || 0}</div>
-                <div style={{ fontSize: '12px', color: '#aaa' }}>Ouro Livre</div>
+                <div style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase' }}>Ouro</div>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '24px' }}>🏦</div>
+                <div style={{ fontSize: '24px', color: '#b30000' }}>🏦</div>
                 <div style={{ fontWeight: 'bold' }}>{selectedOpponent.savedPoints || 0}</div>
-                <div style={{ fontSize: '12px', color: '#aaa' }}>Cofre</div>
+                <div style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase' }}>Cofre</div>
               </div>
             </div>
 
@@ -158,21 +163,21 @@ export default function Opponents({ opponents, currentUsername, gameId }) {
               <div style={{ 
                 marginBottom: '20px', 
                 padding: '10px', 
-                background: selectedOpponent.consecutiveSaves >= 2 ? '#2ecc7133' : '#2a2a3e',
+                background: selectedOpponent.consecutiveSaves >= 2 ? '#ff4d4d20' : '#111',
                 borderRadius: '8px',
                 textAlign: 'center',
-                border: selectedOpponent.consecutiveSaves >= 2 ? '1px solid #2ecc71' : '1px solid #444'
+                border: selectedOpponent.consecutiveSaves >= 2 ? '1px solid #ff4d4d' : '1px solid #333'
               }}>
                 <span style={{ marginRight: '10px' }}>🍀</span>
                 {selectedOpponent.consecutiveSaves >= 2 
-                  ? <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>Proteção contra Azar ATIVA (Rolará 2+ dados)</span>
-                  : <span style={{ color: '#aaa' }}>Acúmulo de Azar: {selectedOpponent.consecutiveSaves}/2</span>
+                  ? <span style={{ color: '#ff4d4d', fontWeight: 'bold' }}>Proteção Ativa!</span>
+                  : <span style={{ color: '#aaa' }}>Azar: {selectedOpponent.consecutiveSaves}/2</span>
                 }
               </div>
             )}
 
             {/* Campo de batalha do oponente */}
-            <h3 style={{ marginBottom: '15px' }}>⚔️ Campo de Batalha</h3>
+            <h3 style={{ marginBottom: '15px', color: '#e94560', textTransform: 'uppercase', fontSize: '14px' }}>⚔️ Arena de Combate</h3>
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(6, 1fr)',
@@ -183,69 +188,75 @@ export default function Opponents({ opponents, currentUsername, gameId }) {
                 <div
                   key={idx}
                   style={{
-                    background: card ? '#2a2a3e' : '#1a1a2e',
-                    border: card ? '2px solid #e94560' : '1px dashed #444',
+                    background: card ? '#111' : 'rgba(0,0,0,0.3)',
+                    border: card ? '1px solid #e94560' : '1px dashed #333',
                     borderRadius: '8px',
                     padding: '10px',
                     textAlign: 'center',
                     minHeight: '100px',
                     display: 'flex',
                     flexDirection: 'column',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    boxShadow: card ? '0 0 10px rgba(233,69,96,0.2)' : 'none'
                   }}
                 >
                   {card ? (
                     <>
-                      <div style={{ fontWeight: 'bold', fontSize: '12px', color: '#f39c12' }}>
+                      <div style={{ fontWeight: 'bold', fontSize: '12px', color: '#e94560' }}>
                         {card.nome?.slice(0, 15)}
                       </div>
-                      <div style={{ fontSize: '11px', marginTop: '5px' }}>
+                      <div style={{ fontSize: '11px', marginTop: '5px', color: '#fff' }}>
                         ⚔️ {card.atk} 🛡️ {card.def}
                       </div>
                       {card.isEvolved && (
-                        <div style={{ fontSize: '10px', color: '#f39c12', marginTop: '3px' }}>
-                          ✨ EVOLUÍDA
+                        <div style={{ fontSize: '10px', color: '#ffcc00', marginTop: '3px', fontWeight: 'bold' }}>
+                          ✨ ELITE
                         </div>
                       )}
                     </>
                   ) : (
-                    <div style={{ fontSize: '12px', color: '#555' }}>Vazio</div>
+                    <div style={{ fontSize: '12px', color: '#444' }}>Vazio</div>
                   )}
                 </div>
               ))}
             </div>
 
             {/* Mão do oponente */}
-            <h3 style={{ marginBottom: '10px' }}>🃏 Mão</h3>
+            <h3 style={{ marginBottom: '10px', color: '#fff', fontSize: '14px' }}>🃏 Recursos</h3>
             <div style={{
               padding: '10px',
-              background: '#2a2a3e',
+              background: '#111',
+              border: '1px solid #333',
               borderRadius: '8px',
               textAlign: 'center'
             }}>
               <div style={{ fontSize: '24px' }}>🃏 x {selectedOpponent.hand?.length || 0}</div>
-              <div style={{ fontSize: '12px', color: '#aaa' }}>Cartas na mão (ocultas)</div>
+              <div style={{ fontSize: '12px', color: '#666' }}>Cartas na mão</div>
             </div>
 
             {/* Sinergias */}
             {selectedOpponent.synergies && (
               <>
-                <h3 style={{ marginTop: '20px', marginBottom: '10px' }}>🔗 Sinergias Ativas</h3>
+                <h3 style={{ marginTop: '20px', marginBottom: '10px', color: '#e94560', fontSize: '14px' }}>🔗 Sinergias Dominadas</h3>
                 <div style={{
                   display: 'flex',
                   flexWrap: 'wrap',
                   gap: '10px',
                   padding: '10px',
-                  background: '#2a2a3e',
+                  background: '#000',
+                  border: '1px solid #222',
                   borderRadius: '8px'
                 }}>
                   {Object.entries(selectedOpponent.synergies.regions || {}).map(([region, count]) => (
                     count >= 2 && (
                       <span key={region} style={{
                         background: '#e94560',
+                        color: '#fff',
                         padding: '4px 12px',
-                        borderRadius: '20px',
-                        fontSize: '12px'
+                        borderRadius: '4px',
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        border: '1px solid #ff4d4d'
                       }}>
                         🗺️ {region} x{count}
                       </span>
@@ -254,11 +265,13 @@ export default function Opponents({ opponents, currentUsername, gameId }) {
                   {Object.entries(selectedOpponent.synergies.classes || {}).map(([classe, count]) => (
                     count >= 2 && (
                       <span key={classe} style={{
-                        background: '#f39c12',
+                        background: '#333',
+                        color: '#ffcc00',
                         padding: '4px 12px',
-                        borderRadius: '20px',
-                        fontSize: '12px',
-                        color: '#000'
+                        borderRadius: '4px',
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        border: '1px solid #444'
                       }}>
                         ⚔️ {classe} x{count}
                       </span>
