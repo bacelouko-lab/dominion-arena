@@ -99,6 +99,8 @@ class GameLogic {
   }
 
   nextPlayer() {
+    if (this.phase === 'end') return null; // Proteção contra sessões zumbi
+
     let nextIndex = (this.currentPlayerIndex + 1) % this.playerOrder.length;
     let attempts = 0;
     

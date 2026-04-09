@@ -520,6 +520,7 @@ io.on('connection', (socket) => {
       if (alivePlayers.length <= 1) {
         console.log(`🏆 FIM DE JOGO DETECTADO!`);
         const winner = alivePlayers[0];
+        game.phase = 'end'; // Proteção contra sessões zumbi
         try {
           await saveMatch(game, winner.playerId, defender.playerId);
         } catch (err) {
@@ -633,6 +634,11 @@ io.on('connection', (socket) => {
             const timerId = setTimeout(() => {
               // Verifica novamente se o jogador ainda está desconectado após o limite de tempo
               const checkGame = games.get(gameId);
+              if (checkGame && checkGame.phase === 'end') {
+                console.log(`ℹ️ Ignorando timeout de desconexão para o jogador ${playerId} (partida já encerrada).`);
+                disconnectTimers.delete(timerKey);
+                return;
+              }
               if (checkGame && checkGame.players[playerId] && !checkGame.players[playerId].connected) {
                 console.log(`💀 ${player.username} não voltou a tempo e foi eliminado.`);
                 checkGame.players[playerId].life = 0; // "Eliminado por desconexão"
