@@ -221,7 +221,12 @@ class GameLogic {
       player.consecutiveSaves = 0;
     }
     
-    console.log(`🎲 ${player.username} rolou ${rolls.join(', ')} = ${totalGold} pontos`);
+    const rollsInfo = [];
+    if (player.consecutiveSaves >= 2) rollsInfo.push("Proteção de Azar");
+    if (Math.floor((player.savedPoints + player.gold) / 4) > 0) rollsInfo.push(`Cofre: +${Math.floor(player.savedPoints / 4)}`);
+    if (player.synergies?.regions?.['Céu'] >= 3) rollsInfo.push("Sinergia Céu Nv3");
+    
+    console.log(`🎲 ${player.username} rolou ${rolls.join(', ')} = ${totalGold} pontos ${rollsInfo.length > 0 ? '(' + rollsInfo.join(', ') + ')' : ''}`);
     if (hasLakeNv6) console.log(`🌊 Lago Nv6: todos os dados são 6!`);
     
     return { gold: totalGold, rolls, totalGold: player.gold, diceCount, savedPoints: player.savedPoints };
@@ -885,13 +890,14 @@ class GameLogic {
     
     const evolvedEffects = this.applyActiveAbilities(attacker, defender);
     
-    let defenderTotalDef = 0;
+    let defenderBaseDef = 0;
     for (const card of defender.field) {
-      if (card && card.def) defenderTotalDef += card.def;
+      if (card && card.def) defenderBaseDef += card.def;
     }
-    defenderTotalDef += defenderSynBonuses.defBonus;
-    defenderTotalDef += defenderPassiveBonuses.defBonus;
-    defenderTotalDef += evolvedEffects.defBonus;
+    
+    let defenderTotalDef = defenderBaseDef + defenderSynBonuses.defBonus + defenderPassiveBonuses.defBonus + evolvedEffects.defBonus;
+    
+    console.log(`   🛡️ DEF ${defender.username}: ${defenderBaseDef} (Base) + ${defenderSynBonuses.defBonus} (Sinergia) + ${defenderPassiveBonuses.defBonus} (Passiva) + ${evolvedEffects.defBonus} (Ativa) = ${defenderTotalDef}`);
     
     if (evolvedEffects.reduceDefense > 0) {
       defenderTotalDef = Math.max(0, defenderTotalDef - evolvedEffects.reduceDefense);
@@ -902,13 +908,14 @@ class GameLogic {
       defender.shield = 0;
     }
     
-    let attackerTotalAtk = 0;
+    let attackerBaseAtk = 0;
     for (const card of attacker.field) {
-      if (card && card.atk) attackerTotalAtk += card.atk;
+      if (card && card.atk) attackerBaseAtk += card.atk;
     }
-    attackerTotalAtk += attackerSynBonuses.atkBonus;
-    attackerTotalAtk += attackerPassiveBonuses.atkBonus;
-    attackerTotalAtk += evolvedEffects.atkBonus;
+    
+    let attackerTotalAtk = attackerBaseAtk + attackerSynBonuses.atkBonus + attackerPassiveBonuses.atkBonus + evolvedEffects.atkBonus;
+    
+    console.log(`   ⚔️ ATK ${attacker.username}: ${attackerBaseAtk} (Base) + ${attackerSynBonuses.atkBonus} (Sinergia) + ${attackerPassiveBonuses.atkBonus} (Passiva) + ${evolvedEffects.atkBonus} (Ativa) = ${attackerTotalAtk}`);
     
     if (evolvedEffects.attackMultiplier < 1) {
       attackerTotalAtk = Math.floor(attackerTotalAtk * evolvedEffects.attackMultiplier);
@@ -920,11 +927,17 @@ class GameLogic {
     const hasAttackerCards = attacker.field.some(card => card !== null);
     if (damage === 0 && hasAttackerCards) {
       damage = 1;
+      console.log(`   🔸 Dano mínimo aplicado (+1)`);
     }
+
 
     let totalDirectDamage = 0;
     if (attackerSynBonuses.directDamage) totalDirectDamage += attackerSynBonuses.directDamage;
     if (evolvedEffects.directDamage) totalDirectDamage += evolvedEffects.directDamage;
+    
+    if (totalDirectDamage > 0) {
+      console.log(`   ✨ Dano Direto: +${totalDirectDamage}`);
+    }
     
     damage += totalDirectDamage;
     
