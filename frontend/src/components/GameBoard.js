@@ -131,11 +131,12 @@ export default function GameBoard({ gameState, gameId, username }) {
     };
   }, [socket, gameId, username, currentPlayer]);
 
-  const toggleMute = () => {
-    const newMuted = !muted;
-    setMuted(newMuted);
-    soundManager.setMuted(newMuted);
     if (!newMuted) soundManager.play('click');
+  };
+
+  const handleSellCard = (card, isField) => {
+    if (!isMyTurnAndAlive) return;
+    socket.emit('sell-card', { cardInstanceId: card.instanceId, isField });
   };
 
   useEffect(() => {
@@ -164,10 +165,10 @@ export default function GameBoard({ gameState, gameId, username }) {
     }
   }, [gameState]);
 
-  const handleDragStart = (e, cardIndex) => {
+  const handleDragStart = (e, fromData) => {
     if (!isMyTurnAndAlive || phase !== 'position') return;
-    setDraggedCardIndex(cardIndex);
-    e.dataTransfer.setData('text/plain', cardIndex);
+    setDraggedCardIndex(fromData); // Agora é um objeto {type, index}
+    e.dataTransfer.setData('application/json', JSON.stringify(fromData));
     e.dataTransfer.effectAllowed = 'move';
   };
 
@@ -176,12 +177,24 @@ export default function GameBoard({ gameState, gameId, username }) {
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDrop = (e, fieldPosition) => {
+  const handleDrop = (e, toData) => {
     e.preventDefault();
     if (!isMyTurnAndAlive || phase !== 'position') return;
-    const cardIndex = draggedCardIndex !== null ? draggedCardIndex : parseInt(e.dataTransfer.getData('text/plain'));
-    if (!isNaN(cardIndex)) {
-      socket.emit('place-card', { cardIndex, fieldPosition });
+    
+    let fromData = draggedCardIndex;
+    if (!fromData) {
+      try {
+        fromData = JSON.parse(e.dataTransfer.getData('application/json'));
+      } catch (err) {
+        return;
+      }
+    }
+
+    if (fromData && toData) {
+      // Evitar mover para o mesmo lugar
+      if (fromData.type === toData.type && fromData.index === toData.index) return;
+      
+      socket.emit('reposition-card', { from: fromData, to: toData });
       setDraggedCardIndex(null);
     }
   };
@@ -325,6 +338,9 @@ export default function GameBoard({ gameState, gameId, username }) {
     socket.on('synergy-copied', ({ playerId, copiedSynergy, copiedLevel }) => {
       setPlayers(prev => prev.map(p => p.playerId === playerId ? { ...p, copiedSynergy, copiedSynergyLevel: copiedLevel } : p));
     });
+    socket.on('sell-success', ({ gold }) => {
+      soundManager.play('coin');
+    });
     // Evento de jogador desconectado (avisar que alguém caiu)
     socket.on('player-disconnected', ({ playerId, username }) => {
       console.log(`⚠️ Jogador ${username} desconectou. Aguardando reconexão...`);
@@ -361,6 +377,7 @@ export default function GameBoard({ gameState, gameId, username }) {
       socket.off('synergies-calculated');
       socket.off('synergy-copied');
       socket.off('player-disconnected');
+      socket.off('sell-success');
     };
   }, [socket, effectiveCurrentPlayerId]);
 
@@ -530,9 +547,21 @@ export default function GameBoard({ gameState, gameId, username }) {
               gold={currentPlayerObj?.gold || 0} 
             />
             <div onDragOver={handleDragOver}>
-              <Hand hand={currentPlayerObj?.hand || []} gameId={gameId} isDraggable={false} />
+              <Hand 
+                hand={currentPlayerObj?.hand || []} 
+                gameId={gameId} 
+                onDragStart={handleDragStart}
+                onDrop={handleDrop}
+                onSell={handleSellCard} 
+              />
             </div>
-            <Field field={currentPlayerObj?.field || []} gameId={gameId} isDropTarget={false} />
+            <Field 
+              field={currentPlayerObj?.field || []} 
+              gameId={gameId} 
+              onDragStart={handleDragStart}
+              onDrop={handleDrop}
+              onSell={handleSellCard} 
+            />
             
             {hasAnjoGovernante && isMyTurnAndAlive && (
               <button 
@@ -561,23 +590,28 @@ export default function GameBoard({ gameState, gameId, username }) {
             <div onDragOver={handleDragOver}>
               <Hand 
                 hand={currentPlayerObj?.hand || []} 
-                gameId={gameId} 
-                isDraggable={true} 
                 onDragStart={handleDragStart}
+                onDrop={handleDrop}
+                onSell={handleSellCard}
               />
             </div>
             <Field 
               field={currentPlayerObj?.field || []} 
-              gameId={gameId} 
+              onDragStart={handleDragStart}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
+              onSell={handleSellCard}
               isDropTarget={true}
             />
           </>
         )}
         
         {phase === 'combat' && (
-          <Field field={currentPlayerObj?.field || []} gameId={gameId} />
+          <Field 
+            field={currentPlayerObj?.field || []} 
+            gameId={gameId} 
+            onSell={handleSellCard}
+          />
         )}
       </div>
 

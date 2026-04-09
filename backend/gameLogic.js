@@ -11,7 +11,34 @@ class GameLogic {
     this.shop = [];
     this.round = 1;
     this.attackedThisRound = [];
-    this.eliminations = []; // Ordem de eliminação (quem morrer primeiro fica no início)
+    this.eliminations = []; 
+    this.pool = this.initializePool(); // Deck Global compartilhado
+    this.shufflePool();
+  }
+
+  shufflePool() {
+    for (let i = this.pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [this.pool[i], this.pool[j]] = [this.pool[j], this.pool[i]];
+    }
+  }
+
+  returnCardToPool(card) {
+    if (!card) return;
+    
+    // Se a carta for evoluída, ela conta como 2 cópias no pool
+    const numCopies = card.isEvolved ? 2 : 1;
+    
+    // Limpar propriedades temporárias
+    const baseCard = cardsData.find(c => c.id === card.id);
+    if (!baseCard) return;
+
+    for (let i = 0; i < numCopies; i++) {
+      this.pool.push({ ...baseCard });
+    }
+    
+    this.shufflePool();
+    console.log(`♻️ Pool: ${numCopies} cópia(s) de ${baseCard.nome} retornaram ao deck global. Total no deck: ${this.pool.length}`);
   }
 
   addPlayer(playerId, username) {
@@ -137,6 +164,16 @@ class GameLogic {
     if (!this.eliminations.includes(playerId)) {
       this.eliminations.push(playerId);
       console.log(`💀 ELO: Registro de eliminação de ${this.players[playerId]?.username}. Ranking atual das mortes: ${this.eliminations.length}`);
+      
+      // DEVOLVER CARTAS AO POOL GLOBAL
+      const player = this.players[playerId];
+      if (player) {
+        player.hand.forEach(card => this.returnCardToPool(card));
+        player.field.forEach(card => this.returnCardToPool(card));
+        player.hand = [];
+        player.field = Array(6).fill(null);
+        console.log(`♻️ Pool: Todas as cartas de ${player.username} foram devolvidas ao deck global.`);
+      }
     }
   }
 
@@ -340,12 +377,11 @@ class GameLogic {
     else if (player.dice === 3) shopSize = 5;
     
     this.shop = [];
-    const pool = this.initializePool();
     
     for (let i = 0; i < shopSize; i++) {
-      if (pool.length === 0) break;
-      const randomIndex = Math.floor(Math.random() * pool.length);
-      const selectedCard = pool[randomIndex];
+      if (this.pool.length === 0) break;
+      const randomIndex = Math.floor(Math.random() * this.pool.length);
+      const selectedCard = this.pool.splice(randomIndex, 1)[0];
       
       let custo = selectedCard.custo;
       if (costReduction > 0) {
@@ -366,6 +402,7 @@ class GameLogic {
       };
       this.shop.push(newCard);
     }
+    console.log(`🛒 Shop: ${this.shop.length} cartas geradas para ${player.username}. Deck restante: ${this.pool.length}`);
     return this.shop;
   }
 
@@ -376,6 +413,10 @@ class GameLogic {
 
     player.gold -= 1;
     
+    // Devolver cartas atuais da loja ao pool antes do reroll
+    this.shop.forEach(card => this.returnCardToPool(card));
+    this.shop = [];
+
     this.calculateSynergies(playerId);
     
     let costReduction = 0;
@@ -390,12 +431,11 @@ class GameLogic {
     if (player.dice === 2) shopSize = 4;
     else if (player.dice === 3) shopSize = 5;
     
-    const pool = this.initializePool();
     const newShop = [];
     for (let i = 0; i < shopSize; i++) {
-      if (pool.length === 0) break;
-      const randomIndex = Math.floor(Math.random() * pool.length);
-      const selectedCard = pool[randomIndex];
+      if (this.pool.length === 0) break;
+      const randomIndex = Math.floor(Math.random() * this.pool.length);
+      const selectedCard = this.pool.splice(randomIndex, 1)[0];
       
       let custo = selectedCard.custo;
       if (costReduction > 0) {
@@ -410,6 +450,7 @@ class GameLogic {
       newShop.push(newCard);
     }
     this.shop = newShop;
+    console.log(`🎲 Reroll: Loja atualizada. Deck restante: ${this.pool.length}`);
     return { shop: this.shop, gold: player.gold };
   }
 
@@ -420,14 +461,17 @@ class GameLogic {
     player.choseShop = choseShop;
 
     if (!choseShop) {
+      // Devolver cartas que estavam na loja ao pool se escolher NÃO ver a loja
+      if (this.shop && this.shop.length > 0) {
+        this.shop.forEach(card => this.returnCardToPool(card));
+        this.shop = [];
+      }
       const pointsToSave = player.gold;
-      // O ouro deve apenas SOMA no cofre
       player.savedPoints += pointsToSave;
       player.gold = 0;
       player.consecutiveSaves++;
       this.phase = 'combat';
     } else {
-      // Deletado: O cofre não pode ser zerado ao abrir a aba shop!
       player.consecutiveSaves = 0;
       this.generateShop(playerId);
       this.phase = 'buy';
@@ -451,11 +495,58 @@ class GameLogic {
     if (player.hand.length >= 7) return { error: 'Hand is full' };
     
     player.gold -= card.custo;
-    player.hand.push(card);
+    
+    // Armazenar o preço pago para a recompra (venda) correta
+    const cardToBuy = { ...card, purchasePrice: card.custo };
+    
+    player.hand.push(cardToBuy);
     this.shop.splice(shopCardIndex, 1);
     this.checkEvolution(playerId);
     
     return { success: true, hand: player.hand, gold: player.gold };
+  }
+
+  sellCard(playerId, cardInstanceId, isField) {
+    const player = this.players[playerId];
+    if (!player) return { error: 'Player not found' };
+
+    let card = null;
+    let cardIndex = -1;
+
+    if (isField) {
+      cardIndex = player.field.findIndex(c => c && c.instanceId === cardInstanceId);
+      if (cardIndex !== -1) {
+        card = player.field[cardIndex];
+        player.field[cardIndex] = null;
+      }
+    } else {
+      cardIndex = player.hand.findIndex(c => c && c.instanceId === cardInstanceId);
+      if (cardIndex !== -1) {
+        card = player.hand[cardIndex];
+        player.hand.splice(cardIndex, 1);
+      }
+    }
+
+    if (!card) return { error: 'Carta não encontrada para venda' };
+
+    // Devolver o ouro gasto (ou 1 se não houver purchasePrice por algum erro)
+    const refund = card.purchasePrice !== undefined ? card.purchasePrice : 1;
+    player.gold += refund;
+
+    // Devolver carta ao pool global
+    this.returnCardToPool(card);
+    
+    this.calculateSynergies(playerId);
+
+    console.log(`💰 VENDA: ${player.username} vendeu ${card.nome} por ${refund} ouro.`);
+
+    return { 
+      success: true, 
+      gold: player.gold, 
+      hand: player.hand, 
+      field: player.field,
+      synergies: player.synergies
+    };
   }
 
   checkEvolution(playerId) {
@@ -531,15 +622,62 @@ class GameLogic {
     return player.hand;
   }
 
-  placeCard(playerId, cardIndex, fieldPosition) {
+  repositionCard(playerId, from, to) {
     const player = this.players[playerId];
     if (!player) return { error: 'Player not found' };
-    if (fieldPosition >= player.field.length) return { error: 'Invalid field position' };
-    if (cardIndex >= player.hand.length) return { error: 'Invalid card' };
-    if (player.field[fieldPosition] !== null) return { error: 'Position already occupied' };
-    
-    const card = player.hand.splice(cardIndex, 1)[0];
-    player.field[fieldPosition] = card;
+
+    let cardFrom = null;
+    let cardTo = null;
+
+    // 1. Obter a carta de origem
+    if (from.type === 'hand') {
+      if (from.index >= player.hand.length) return { error: 'Invalid hand index' };
+      cardFrom = player.hand[from.index];
+    } else if (from.type === 'field') {
+      if (from.index >= player.field.length) return { error: 'Invalid field index' };
+      cardFrom = player.field[from.index];
+    }
+
+    if (!cardFrom) return { error: 'No card found at source' };
+
+    // 2. Obter a carta de destino (para Swap)
+    if (to.type === 'hand') {
+      if (to.index !== undefined && to.index < player.hand.length) {
+        cardTo = player.hand[to.index];
+      }
+    } else if (to.type === 'field') {
+      if (to.index >= player.field.length) return { error: 'Invalid target field index' };
+      cardTo = player.field[to.index];
+    }
+
+    // 3. Executar o Mover ou Trocar
+    // Remover a carta da origem
+    if (from.type === 'hand') {
+      player.hand.splice(from.index, 1);
+    } else {
+      player.field[from.index] = null;
+    }
+
+    // Lógica para o Destino
+    if (to.type === 'hand') {
+      // Se estamos movendo para a mão, apenas damos um push (não importa o index do drop na mão)
+      player.hand.push(cardFrom);
+      // Se havia uma carta no destino (apenas se for Swap de campo para mão, o que é raro mas possível)
+      if (cardTo && from.type === 'field') {
+        player.field[from.index] = cardTo;
+      }
+    } else if (to.type === 'field') {
+      if (cardTo) {
+        // SWAP: Colocar a carta que estava no destino na origem
+        if (from.type === 'hand') {
+          player.hand.splice(from.index, 0, cardTo);
+        } else {
+          player.field[from.index] = cardTo;
+        }
+      }
+      player.field[to.index] = cardFrom;
+    }
+
     this.checkEvolution(playerId);
     this.calculateSynergies(playerId);
     
