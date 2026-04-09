@@ -119,155 +119,109 @@ app.get('/api/games/:gameId', (req, res) => {
   res.json(game.getGameState());
 });
 
-// ========== FUNÇÃO PARA SALVAR PARTIDA ==========
-async function saveMatch(game, winnerId, loserId) {
-  console.log('🟢 saveMatch chamada!', { winnerId, loserId });
+// Tabela de Pontos por Posição (Rank) e Número de Jogadores
+const ELO_TABLE = {
+  2: [+20, -20],
+  3: [+25, -10, -15],
+  4: [+25, +10, -10, -25],
+  5: [+30, +15, -5, -15, -25],
+  6: [+30, +20, +10, -10, -20, -30]
+};
+
+// ========== FUNÇÃO PARA SALVAR PARTIDA (RANKING) ==========
+async function saveMatch(game, ranking) {
+  console.log('🟢 saveMatch (Ranking) chamada!', { ranking });
   
   const { supabase } = require('./supabase');
-  
-  // Buscar ELO atual dos jogadores
-  const { data: winner, error: winnerError } = await supabase
-    .from('users')
-    .select('elo, username, wins')
-    .eq('id', winnerId)
-    .single();
-  
-  if (winnerError) {
-    console.error('❌ Erro ao buscar vencedor:', winnerError);
-    return;
-  }
-  
-  const { data: loser, error: loserError } = await supabase
-    .from('users')
-    .select('elo, username, losses')
-    .eq('id', loserId)
-    .single();
-  
-  if (loserError) {
-    console.error('❌ Erro ao buscar perdedor:', loserError);
-    return;
-  }
-  
-  console.log(`📊 Vencedor: ${winner.username} (ELO: ${winner.elo}, Wins: ${winner.wins || 0})`);
-  console.log(`📊 Perdedor: ${loser.username} (ELO: ${loser.elo}, Losses: ${loser.losses || 0})`);
-  
-  // Calcular novo ELO
-  const K = 32;
-  const expectedWinner = 1 / (1 + Math.pow(10, (loser.elo - winner.elo) / 400));
-  const expectedLoser = 1 / (1 + Math.pow(10, (winner.elo - loser.elo) / 400));
-  
-  const newWinnerElo = Math.round(winner.elo + K * (1 - expectedWinner));
-  const newLoserElo = Math.round(loser.elo + K * (0 - expectedLoser));
-  
-  console.log(`📊 Novo ELO: ${winner.username} ${winner.elo}→${newWinnerElo}, ${loser.username} ${loser.elo}→${newLoserElo}`);
-  
-  // Salvar partida
-  const { error: matchError } = await supabase
-    .from('matches')
-    .insert({
-      game_id: game.gameId,
-      winner_id: winnerId,
-      loser_id: loserId,
-      winner_elo_before: winner.elo,
-      winner_elo_after: newWinnerElo,
-      loser_elo_before: loser.elo,
-      loser_elo_after: newLoserElo,
-      duration: game.turn,
-      round: game.round
-    });
-  
-  if (matchError) {
-    console.error('❌ Erro ao salvar partida:', matchError);
-  } else {
-    console.log(`✅ Partida salva: ${winner.username} (${winner.elo}→${newWinnerElo}) vs ${loser.username} (${loser.elo}→${newLoserElo})`);
-  }
-  
-  // Atualizar ELO e vitórias/derrotas dos jogadores
-  const { error: updateWinnerError } = await supabase
-    .from('users')
-    .update({ 
-      elo: newWinnerElo,
-      wins: (winner.wins || 0) + 1
-    })
-    .eq('id', winnerId);
-  
-  if (updateWinnerError) {
-    console.error('❌ Erro ao atualizar vencedor:', updateWinnerError);
-  } else {
-    console.log(`✅ Vencedor atualizado: ${winner.username} - Wins: ${(winner.wins || 0) + 1}`);
-  }
-  
-  const { error: updateLoserError } = await supabase
-    .from('users')
-    .update({ 
-      elo: newLoserElo,
-      losses: (loser.losses || 0) + 1
-    })
-    .eq('id', loserId);
-  
-  if (updateLoserError) {
-    console.error('❌ Erro ao atualizar perdedor:', updateLoserError);
-  } else {
-    console.log(`✅ Perdedor atualizado: ${loser.username} - Losses: ${(loser.losses || 0) + 1}`);
-  }
-  
-  // ==========================================
-  // TELEMETRIA E BALANCEAMENTO (CARTAS E SINERGIAS)
-  // ==========================================
-  try {
-    const winnerPlayer = game.players[winnerId];
-    const loserPlayer = game.players[loserId];
+  const numPlayers = ranking.length;
+  const pointsTable = ELO_TABLE[numPlayers] || ELO_TABLE[2]; 
 
-    if (winnerPlayer && loserPlayer) {
-      const processPlayerStats = async (player, isWin) => {
-        // Obter todas as cartas do jogador (Mão e Campo)
+  try {
+    for (let i = 0; i < numPlayers; i++) {
+      const playerId = ranking[i];
+      const rank = i + 1;
+      const eloGain = pointsTable[i] || 0;
+      const isWin = eloGain > 0;
+
+      // Buscar ELO atual do jogador
+      const { data: user, error: userError } = await supabase
+        .from('users')
+        .select('elo, username, wins, losses')
+        .eq('id', playerId)
+        .single();
+
+      if (userError) {
+        console.error(`❌ Erro ao buscar jogador ${playerId}:`, userError);
+        continue;
+      }
+
+      const oldElo = user.elo;
+      const newElo = Math.max(0, oldElo + eloGain);
+
+      console.log(`📊 ${user.username} - Rank ${rank} | ELO: ${oldElo} → ${newElo} (${eloGain > 0 ? '+' : ''}${eloGain})`);
+
+      // Salvar entrada na tabela de matches (adaptado para ranking)
+      const { error: matchError } = await supabase
+        .from('matches')
+        .insert({
+          game_id: game.gameId,
+          winner_id: playerId, // Aqui salvamos cada um mas com o rank no comentário ou nova coluna se existir
+          winner_elo_before: oldElo,
+          winner_elo_after: newElo,
+          duration: game.turn,
+          round: game.round
+          // Nota: Seria ideal ter uma coluna 'rank' no banco futuramente.
+        });
+
+      // Atualizar o usuário
+      const updateData = {
+        elo: newElo
+      };
+      if (isWin) {
+        updateData.wins = (user.wins || 0) + 1;
+      } else {
+        updateData.losses = (user.losses || 0) + 1;
+      }
+
+      await supabase
+        .from('users')
+        .update(updateData)
+        .eq('id', playerId);
+
+      // TELEMETRIA E BALANCEAMENTO
+      const player = game.players[playerId];
+      if (player) {
         const allCards = [...player.field, ...player.hand].filter(c => c !== null);
-        
         for (const card of allCards) {
-          const { error } = await supabase.rpc('increment_card_stats', {
+          await supabase.rpc('increment_card_stats', {
             p_card_id: card.id,
             p_card_name: card.nome.replace(' (Evoluída)', ''),
             p_is_win: isWin,
             p_is_evolved: card.isEvolved || false
           });
-          if (error) console.error(`❌ Erro RPC Cartas (${card.nome}):`, error.message);
         }
-
-        // Processar Sinergias (usando as regions e classes ativas)
-        const synergies = player.synergies || { regions: {}, classes: {} };
         
+        const synergies = player.synergies || { regions: {}, classes: {} };
         for (const [region, level] of Object.entries(synergies.regions)) {
           if (level > 0) {
-            const { error } = await supabase.rpc('increment_synergy_stats', {
-              p_synergy_name: region,
-              p_level: level,
-              p_is_win: isWin
+            await supabase.rpc('increment_synergy_stats', {
+              p_synergy_name: region, p_level: level, p_is_win: isWin
             });
-            if (error) console.error(`❌ Erro RPC Sinergia (${region}):`, error.message);
           }
         }
         for (const [classe, level] of Object.entries(synergies.classes)) {
           if (level > 0) {
-            const { error } = await supabase.rpc('increment_synergy_stats', {
-              p_synergy_name: classe,
-              p_level: level,
-              p_is_win: isWin
+            await supabase.rpc('increment_synergy_stats', {
+              p_synergy_name: classe, p_level: level, p_is_win: isWin
             });
-            if (error) console.error(`❌ Erro RPC Sinergia (${classe}):`, error.message);
           }
         }
-      };
-
-      await processPlayerStats(winnerPlayer, true);
-      await processPlayerStats(loserPlayer, false);
-      
-      console.log('📊 Telemetria de balanceamento salva com sucesso!');
+      }
     }
-  } catch (metricsError) {
-    console.error('❌ Erro no processamento principal de telemetria:', metricsError);
+    console.log('✅ saveMatch processada para todo o ranking!');
+  } catch (err) {
+    console.error('❌ Erro crítico em saveMatch:', err);
   }
-
-  console.log('✅ saveMatch concluída!');
 }
 
 io.on('connection', (socket) => {
@@ -514,6 +468,8 @@ io.on('connection', (socket) => {
     // Verifica se o defensor morreu
     if (defender.life <= 0) {
       console.log(`💀 Jogador morreu! ${defender.username} vida: ${defender.life}`);
+      game.recordElimination(defender.playerId);
+      
       const alivePlayers = Object.values(game.players).filter(p => p.life > 0);
       console.log(`👥 Jogadores vivos: ${alivePlayers.length}`);
       
@@ -521,14 +477,21 @@ io.on('connection', (socket) => {
         console.log(`🏆 FIM DE JOGO DETECTADO!`);
         const winner = alivePlayers[0];
         game.phase = 'end'; // Proteção contra sessões zumbi
+        
+        // Gerar Ranking Final: [Vencedor, ...Quem morreu por último, ..., Quem morreu primeiro]
+        const finalRanking = [winner.playerId, ...[...game.eliminations].reverse()];
+        
         try {
-          await saveMatch(game, winner.playerId, defender.playerId);
+          await saveMatch(game, finalRanking);
         } catch (err) {
           console.error('❌ Erro ao salvar partida:', err);
         }
         io.to(socket.gameId).emit('game-over', { 
           winner: { playerId: winner.playerId, username: winner.username }, 
-          loser: { playerId: defender.playerId, username: defender.username } 
+          ranking: finalRanking.map(id => ({ 
+            playerId: id, 
+            username: game.players[id]?.username 
+          }))
         });
         
         // Limpa o jogo da memória após 2 minutos para dar tempo dos jogadores verem a tela de fim
@@ -642,6 +605,8 @@ io.on('connection', (socket) => {
               if (checkGame && checkGame.players[playerId] && !checkGame.players[playerId].connected) {
                 console.log(`💀 ${player.username} não voltou a tempo e foi eliminado.`);
                 checkGame.players[playerId].life = 0; // "Eliminado por desconexão"
+                checkGame.recordElimination(playerId);
+
                 io.to(gameId).emit('player-eliminated', { playerId, username: player.username });
                 io.to(gameId).emit('player-left', { playerId });
                 disconnectTimers.delete(timerKey);
@@ -653,9 +618,20 @@ io.on('connection', (socket) => {
                   checkGame.phase = 'end';
                   console.log(`🏆 FIM DE JOGO POR W.O.! ${winner.username} venceu.`);
                   
+                  const finalRanking = [winner.playerId, ...[...checkGame.eliminations].reverse()];
+                  
+                  try {
+                    await saveMatch(checkGame, finalRanking);
+                  } catch (err) {
+                    console.error('❌ Erro ao salvar partida (WO):', err);
+                  }
+
                   io.to(gameId).emit('game-over', { 
                     winner: { playerId: winner.playerId, username: winner.username },
-                    loser: { playerId, username: player.username }
+                    ranking: finalRanking.map(id => ({ 
+                      playerId: id, 
+                      username: checkGame.players[id]?.username 
+                    }))
                   });
 
                   // Limpeza da memória

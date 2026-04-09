@@ -11,6 +11,7 @@ class GameLogic {
     this.shop = [];
     this.round = 1;
     this.attackedThisRound = [];
+    this.eliminations = []; // Ordem de eliminação (quem morrer primeiro fica no início)
   }
 
   addPlayer(playerId, username) {
@@ -130,6 +131,13 @@ class GameLogic {
     }
     
     return nextPlayer;
+  }
+
+  recordElimination(playerId) {
+    if (!this.eliminations.includes(playerId)) {
+      this.eliminations.push(playerId);
+      console.log(`💀 ELO: Registro de eliminação de ${this.players[playerId]?.username}. Ranking atual das mortes: ${this.eliminations.length}`);
+    }
   }
 
   endCurrentTurn() {
