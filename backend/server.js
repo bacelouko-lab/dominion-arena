@@ -594,7 +594,7 @@ io.on('connection', (socket) => {
             console.log(`⏳ ${player.username} desconectou. Aguardando 60s antes de eliminar...`);
 
             const timerKey = `${gameId}-${playerId}`;
-            const timerId = setTimeout(() => {
+            const timerId = setTimeout(async () => {
               // Verifica novamente se o jogador ainda está desconectado após o limite de tempo
               const checkGame = games.get(gameId);
               if (checkGame && checkGame.phase === 'end') {
