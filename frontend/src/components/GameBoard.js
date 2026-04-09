@@ -447,7 +447,7 @@ export default function GameBoard({ gameState, gameId, username }) {
             <div style={{ color: '#e94560', fontWeight: 'bold' }}>🎲 Próximo turno: {nextTurnDice} dado(s)</div>
           </div>
           <div style={{ display: 'flex', gap: '20px', marginTop: '30px' }}>
-            <button onClick={() => chooseShopOption(true)} style={{ padding: '15px 30px', cursor: 'pointer', background: '#e94560' }}>🛒 Loja de Armas</button>
+            <button onClick={() => chooseShopOption(true)} style={{ padding: '15px 30px', cursor: 'pointer', background: '#e94560' }}>🛒 Ir para a Loja</button>
             <button onClick={() => chooseShopOption(false)} style={{ padding: '15px 30px', background: '#333', border: '1px solid #e94560', cursor: 'pointer' }}>💾 Guardar Pontos</button>
           </div>
           <div style={{ marginTop: '15px', fontSize: '12px', color: '#888' }}>
@@ -657,5 +657,6 @@ export default function GameBoard({ gameState, gameId, username }) {
       </div>
      </div>
     </div>
+   </div>
   );
 }

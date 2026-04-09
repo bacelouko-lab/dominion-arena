@@ -1,17 +1,40 @@
-import React from 'react';
+import React, { useState } from 'react';
+import SynergyCodex from './SynergyCodex';
 
 export default function Synergies({ synergies }) {
+  const [isCodexOpen, setIsCodexOpen] = useState(false);
+
   if (!synergies || !synergies.regions || !synergies.classes) {
     return (
-      <div style={{ marginTop: '10px', background: '#0a0a1a', padding: '15px', borderRadius: '8px' }}>
-        <h4>🔗 Sinergias Ativas</h4>
+      <div style={{ marginTop: '10px', background: 'rgba(10, 10, 10, 0.8)', border: '1px solid #333', padding: '15px', borderRadius: '8px' }}>
+        <h4 style={{ color: '#e94560', textTransform: 'uppercase', fontSize: '14px', marginBottom: '10px' }}>🔗 Sinergias Ativas</h4>
         <p style={{ fontSize: '12px', color: '#666' }}>Nenhuma sinergia ativa</p>
-        <p style={{ fontSize: '10px', color: '#555' }}>💡 2+ cartas da mesma região ou classe</p>
+        <button 
+          onClick={() => setIsCodexOpen(true)}
+          style={{
+            marginTop: '10px',
+            width: '100%',
+            background: 'none',
+            border: '1px solid #444',
+            color: '#888',
+            fontSize: '11px',
+            padding: '5px',
+            cursor: 'pointer',
+            borderRadius: '4px'
+          }}
+        >
+          📖 Ver Guia de Sinergias
+        </button>
+        <SynergyCodex 
+          isOpen={isCodexOpen} 
+          onClose={() => setIsCodexOpen(false)} 
+          userSynergies={synergies}
+        />
       </div>
     );
   }
 
-  // Configuração dos bônus
+  // Configuração dos bônus (MANTIDO PARA CÁLCULO LOCAL DE ATK/DEF)
   const regionBonuses = {
     Vulcão: { 
       3: { atk: 3, desc: 'ATK +3' },
@@ -95,18 +118,27 @@ export default function Synergies({ synergies }) {
     }
   }
 
-  if (activeEffects.length === 0) {
-    return (
-      <div style={{ marginTop: '10px', background: 'rgba(10, 10, 10, 0.8)', border: '1px solid #333', padding: '15px', borderRadius: '8px' }}>
-        <h4 style={{ color: '#e94560', textTransform: 'uppercase', fontSize: '14px', marginBottom: '10px' }}>🔗 Sinergias Ativas</h4>
-        <p style={{ fontSize: '12px', color: '#666' }}>Nenhuma sinergia ativa</p>
-      </div>
-    );
-  }
-
   return (
     <div style={{ marginTop: '10px', background: 'rgba(10, 10, 10, 0.8)', border: '1px solid #e94560', padding: '15px', borderRadius: '8px', boxShadow: '0 0 15px rgba(233, 69, 96, 0.2)' }}>
-      <h4 style={{ color: '#e94560', textTransform: 'uppercase', fontSize: '14px', marginBottom: '10px' }}>🔗 Sinergias Ativas</h4>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+        <h4 style={{ color: '#e94560', textTransform: 'uppercase', fontSize: '14px', margin: 0 }}>🔗 Sinergias Ativas</h4>
+        <button 
+          onClick={() => setIsCodexOpen(true)}
+          style={{
+            background: '#e94560',
+            border: 'none',
+            color: 'white',
+            fontSize: '10px',
+            padding: '4px 8px',
+            cursor: 'pointer',
+            borderRadius: '4px',
+            fontWeight: 'bold',
+            textTransform: 'uppercase'
+          }}
+        >
+          📖 Codex
+        </button>
+      </div>
       
       {(totalAtkBonus > 0 || totalDefBonus > 0) && (
         <div style={{ 
@@ -135,24 +167,35 @@ export default function Synergies({ synergies }) {
       )}
       
       <div style={{ marginTop: '12px' }}>
-        {activeEffects.map((effect, idx) => (
-          <div key={idx} style={{ 
-            fontSize: '11px', 
-            color: '#fff', 
-            marginBottom: '6px',
-            padding: '4px 8px',
-            background: 'rgba(233, 69, 96, 0.15)',
-            borderLeft: '3px solid #e94560',
-            borderRadius: '2px'
-          }}>
-            <span style={{color: '#ff4d4d', marginRight: '5px'}}>✨</span> {effect}
-          </div>
-        ))}
+        {activeEffects.length === 0 ? (
+          <p style={{ fontSize: '11px', color: '#666', textAlign: 'center' }}>Nenhum bônus numérico ativo</p>
+        ) : (
+          activeEffects.map((effect, idx) => (
+            <div key={idx} style={{ 
+              fontSize: '11px', 
+              color: '#fff', 
+              marginBottom: '6px',
+              padding: '4px 8px',
+              background: 'rgba(233, 69, 96, 0.15)',
+              borderLeft: '3px solid #e94560',
+              borderRadius: '2px'
+            }}>
+              <span style={{color: '#ff4d4d', marginRight: '5px'}}>✨</span> {effect}
+            </div>
+          ))
+        )}
       </div>
       
       <p style={{ fontSize: '10px', color: '#666', marginTop: '15px', textAlign: 'center', fontStyle: 'italic' }}>
         ⚠️ Bônus calculados durante o combate
       </p>
+
+      {/* Guia Lateral Codex */}
+      <SynergyCodex 
+        isOpen={isCodexOpen} 
+        onClose={() => setIsCodexOpen(false)} 
+        userSynergies={synergies}
+      />
     </div>
   );
 }

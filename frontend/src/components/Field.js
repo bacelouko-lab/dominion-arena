@@ -28,7 +28,6 @@ export default function Field({ field, gameId, onDrop, onDragOver, isDropTarget 
   };
 
   return (
-  return (
     <div style={{ marginTop: '20px' }}>
       <h3 style={{ color: '#fff', textTransform: 'uppercase', fontSize: '14px', marginBottom: '15px', letterSpacing: '1px' }}>⚔️ Arena de Combate</h3>
       <div style={{

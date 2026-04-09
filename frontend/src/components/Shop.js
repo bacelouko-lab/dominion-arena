@@ -47,7 +47,7 @@ export default function Shop({ shopCards, onBuy, onReturnCard, gold }) {
         flexWrap: 'wrap',
         gap: '10px'
       }}>
-        <h2 style={{ color: '#e94560', margin: 0, fontSize: 'clamp(18px, 5vw, 24px)', textTransform: 'uppercase', letterSpacing: '2px' }}>🛒 Mercado de Guerra</h2>
+        <h2 style={{ color: '#e94560', margin: 0, fontSize: 'clamp(18px, 5vw, 24px)', textTransform: 'uppercase', letterSpacing: '2px' }}>🛒 Loja de Cartas</h2>
         <div style={{ 
           background: '#e94560', 
           color: '#fff', 
@@ -87,15 +87,6 @@ export default function Shop({ shopCards, onBuy, onReturnCard, gold }) {
               zIndex: 100
             }}>
               <Card card={card} onClick={() => onBuy && onBuy(card, index)} isShop={true} />
-              <div style={{ 
-                marginTop: '15px', 
-                color: gold >= card.custo ? '#ffcc00' : '#ff4d4d',
-                fontWeight: 'bold',
-                fontSize: 'clamp(12px, 3.5vw, 14px)',
-                textShadow: '0 2px 4px rgba(0,0,0,0.5)'
-              }}>
-                💰 PREÇO: {card.custo}
-              </div>
             </div>
           ))
         )}
