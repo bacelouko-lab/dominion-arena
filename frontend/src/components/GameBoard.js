@@ -7,6 +7,7 @@ import Field from './Field';
 import GamePhase from './GamePhase';
 import Synergies from './Synergies';
 import Opponents from './Opponents';
+import soundManager from '../lib/soundManager';
 
 export default function GameBoard({ gameState, gameId, username }) {
   const socket = getSocket();
@@ -32,6 +33,8 @@ export default function GameBoard({ gameState, gameId, username }) {
   
   // Estados para Oráculo do Lago (id:19)
   const [rerollsRemaining, setRerollsRemaining] = useState(0);
+  
+  const [muted, setMuted] = useState(soundManager.isMuted());
 
   const effectiveCurrentPlayerId = currentPlayerId || (players.length > 0 ? players[0]?.playerId : null);
   const isMyTurn = effectiveCurrentPlayerId && currentPlayer?.playerId === effectiveCurrentPlayerId && currentPlayer?.username === username;
@@ -109,6 +112,13 @@ export default function GameBoard({ gameState, gameId, username }) {
       if (reconnectInterval) clearInterval(reconnectInterval);
     };
   }, [socket, gameId, username, currentPlayer]);
+
+  const toggleMute = () => {
+    const newMuted = !muted;
+    setMuted(newMuted);
+    soundManager.setMuted(newMuted);
+    if (!newMuted) soundManager.play('click');
+  };
 
   useEffect(() => {
     if (effectiveCurrentPlayerId) {
@@ -194,11 +204,13 @@ export default function GameBoard({ gameState, gameId, username }) {
       setShop(state.shop || []);
     });
     socket.on('dice-rolled', ({ playerId, rolls, totalGold, diceCount, savedPoints }) => {
+      soundManager.play('dice');
       setPlayers(prev => prev.map(p => p.playerId === playerId ? { ...p, gold: totalGold, dice: diceCount, savedPoints } : p));
       if (playerId === effectiveCurrentPlayerId) setHasRolled(true);
     });
     
     socket.on('dice-rerolled', ({ playerId, rolls, gold, rerollsRemaining }) => {
+      soundManager.play('dice');
       setPlayers(prev => prev.map(p => p.playerId === playerId ? { ...p, gold, diceRolls: rolls, rerollsRemaining } : p));
       if (playerId === effectiveCurrentPlayerId) {
         setRerollsRemaining(rerollsRemaining);
@@ -206,6 +218,7 @@ export default function GameBoard({ gameState, gameId, username }) {
     });
     
     socket.on('anjo-governante-activated', ({ playerId, gold, bonus, spent }) => {
+      soundManager.play('evolve');
       setPlayers(prev => prev.map(p => p.playerId === playerId ? { ...p, gold, anjoGovernanteBonus: bonus, anjoGovernanteSpent: spent } : p));
       if (playerId === effectiveCurrentPlayerId) {
         setAnjoBonus(bonus);
@@ -223,10 +236,12 @@ export default function GameBoard({ gameState, gameId, username }) {
       if (effectiveCurrentPlayerId) setPlayers(prev => prev.map(p => p.playerId === effectiveCurrentPlayerId ? { ...p, gold } : p));
     });
     socket.on('card-bought', ({ playerId, hand, gold, shop }) => {
+      soundManager.play('buy');
       setPlayers(prev => prev.map(p => p.playerId === playerId ? { ...p, hand, gold } : p));
       if (shop) setShop(shop);
     });
     socket.on('card-placed', ({ playerId, field, hand }) => {
+      soundManager.play('place');
       setPlayers(prev => prev.map(p => p.playerId === playerId ? { ...p, field, hand } : p));
       if (playerId === effectiveCurrentPlayerId) {
         socket.emit('calculate-synergies');
@@ -237,6 +252,9 @@ export default function GameBoard({ gameState, gameId, username }) {
       setShop(shop);
     });
     socket.on('phase-changed', ({ phase, turn, nextPlayerId }) => {
+      if (nextPlayerId === (players.find(p => p.username === username)?.playerId)) {
+        soundManager.play('turn');
+      }
       setPhase(phase);
       if (turn) setTurn(turn);
       if (nextPlayerId) setCurrentPlayerId(nextPlayerId);
@@ -251,6 +269,9 @@ export default function GameBoard({ gameState, gameId, username }) {
       }
     });
     socket.on('turn-ended', ({ nextPlayerId, turn, round }) => {
+      if (nextPlayerId === (players.find(p => p.username === username)?.playerId)) {
+        soundManager.play('turn');
+      }
       setCurrentPlayerId(nextPlayerId);
       setTurn(turn);
       setRound(round);
@@ -262,6 +283,7 @@ export default function GameBoard({ gameState, gameId, username }) {
       socket.emit('calculate-synergies');
     });
     socket.on('combat-resolved', ({ attacker, defender, netDamage }) => {
+      soundManager.play('attack');
       setPlayers(prev => prev.map(p => {
         if (p.playerId === defender.playerId) return { ...p, life: Math.max(0, p.life - netDamage) };
         return p;
@@ -270,10 +292,15 @@ export default function GameBoard({ gameState, gameId, username }) {
       else if (defender.username === username) alert(`💔 Você recebeu ${netDamage} de dano de ${attacker.username}!`);
     });
     socket.on('game-over', ({ winner, loser }) => {
+      if (winner.username === username) {
+        soundManager.play('victory');
+        alert(`🏆 PARABÉNS! Você venceu!`);
+      } else {
+        soundManager.play('defeat');
+        alert(`🏆 FIM DE JOGO! ${winner.username} venceu!`);
+      }
       setGameWinner(winner);
       setPhase('end');
-      if (winner.username === username) alert(`🏆 PARABÉNS! Você venceu!`);
-      else alert(`🏆 FIM DE JOGO! ${winner.username} venceu!`);
       setTimeout(() => { if (confirm('Deseja voltar ao menu?')) window.location.href = '/'; }, 3000);
     });
     socket.on('synergies-calculated', (data) => setSynergies(data));
@@ -320,19 +347,29 @@ export default function GameBoard({ gameState, gameId, username }) {
   }, [socket, effectiveCurrentPlayerId]);
 
   const rollDice = () => {
-    if (isMyTurnAndAlive && !hasRolled && phase === 'roll') socket.emit('roll-dice');
+    if (isMyTurnAndAlive && !hasRolled && phase === 'roll') {
+      soundManager.play('click');
+      socket.emit('roll-dice');
+    }
   };
 
   const chooseShopOption = (choseShop) => {
-    if (isMyTurnAndAlive && !hasChosen && phase === 'shop_decision') socket.emit('choose-shop-option', { choseShop });
+    if (isMyTurnAndAlive && !hasChosen && phase === 'shop_decision') {
+      soundManager.play('click');
+      socket.emit('choose-shop-option', { choseShop });
+    }
   };
 
   const rerollShop = () => {
-    if (isMyTurnAndAlive && currentPlayer?.gold >= 1 && phase === 'buy') socket.emit('reroll-shop');
+    if (isMyTurnAndAlive && currentPlayer?.gold >= 1 && phase === 'buy') {
+      soundManager.play('click');
+      socket.emit('reroll-shop');
+    }
   };
 
   const finishShopping = () => {
     if (isMyTurnAndAlive && !hasFinishedBuy && phase === 'buy') {
+      soundManager.play('click');
       socket.emit('finish-shopping');
       setHasFinishedBuy(true);
     }
@@ -340,17 +377,22 @@ export default function GameBoard({ gameState, gameId, username }) {
 
   const finishPositioning = () => {
     if (isMyTurnAndAlive && !hasFinishedPosition && phase === 'position') {
+      soundManager.play('click');
       socket.emit('finish-positioning');
       setHasFinishedPosition(true);
     }
   };
 
   const endTurn = () => {
-    if (isMyTurnAndAlive && phase === 'combat') socket.emit('end-turn');
+    if (isMyTurnAndAlive && phase === 'combat') {
+      soundManager.play('click');
+      socket.emit('end-turn');
+    }
   };
 
   const attackPlayer = () => {
     if (isMyTurnAndAlive && phase === 'combat') {
+      soundManager.play('click');
       socket.emit('attack-player');
     }
   };
@@ -399,7 +441,33 @@ export default function GameBoard({ gameState, gameId, username }) {
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr 280px', gap: '20px' }}>
+    <div style={{ position: 'relative' }}>
+      {/* Botão de Som */}
+      <button 
+        onClick={toggleMute}
+        style={{
+          position: 'fixed',
+          bottom: '20px',
+          left: '20px',
+          zIndex: 1000,
+          background: '#2a2a3e',
+          border: '2px solid #e94560',
+          borderRadius: '50%',
+          width: '50px',
+          height: '50px',
+          fontSize: '24px',
+          cursor: 'pointer',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          boxShadow: '0 4px 10px rgba(0,0,0,0.5)'
+        }}
+        title={muted ? "Ativar Som" : "Mudar para Mudo"}
+      >
+        {muted ? '🔈' : '🔊'}
+      </button>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr 280px', gap: '20px' }}>
       <div style={{ maxHeight: '90vh', overflowY: 'auto' }}>
         <h3>👥 Opositores</h3>
         <div style={{ marginBottom: '10px', fontSize: '14px', color: '#aaa' }}>Rodada: {round} | Turno: {turn}</div>
@@ -542,6 +610,7 @@ export default function GameBoard({ gameState, gameId, username }) {
         
         <Synergies synergies={synergies} />
       </div>
+     </div>
     </div>
   );
 }

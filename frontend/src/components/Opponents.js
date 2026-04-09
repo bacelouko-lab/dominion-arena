@@ -53,6 +53,11 @@ export default function Opponents({ opponents, currentUsername, gameId }) {
                 <div style={{ fontSize: '12px', color: '#888', marginTop: '5px' }}>
                   🃏 Cartas no campo: {opponent.field?.filter(c => c !== null).length || 0}/6
                 </div>
+                {opponent.consecutiveSaves >= 2 && (
+                  <div style={{ fontSize: '12px', color: '#2ecc71', marginTop: '5px', fontWeight: 'bold' }}>
+                    🍀 Proteção Ativa!
+                  </div>
+                )}
               </div>
               <div style={{ fontSize: '24px' }}>👁️</div>
             </div>
@@ -148,6 +153,23 @@ export default function Opponents({ opponents, currentUsername, gameId }) {
                 <div style={{ fontSize: '12px', color: '#aaa' }}>Cofre</div>
               </div>
             </div>
+
+            {selectedOpponent.consecutiveSaves > 0 && (
+              <div style={{ 
+                marginBottom: '20px', 
+                padding: '10px', 
+                background: selectedOpponent.consecutiveSaves >= 2 ? '#2ecc7133' : '#2a2a3e',
+                borderRadius: '8px',
+                textAlign: 'center',
+                border: selectedOpponent.consecutiveSaves >= 2 ? '1px solid #2ecc71' : '1px solid #444'
+              }}>
+                <span style={{ marginRight: '10px' }}>🍀</span>
+                {selectedOpponent.consecutiveSaves >= 2 
+                  ? <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>Proteção contra Azar ATIVA (Rolará 2+ dados)</span>
+                  : <span style={{ color: '#aaa' }}>Acúmulo de Azar: {selectedOpponent.consecutiveSaves}/2</span>
+                }
+              </div>
+            )}
 
             {/* Campo de batalha do oponente */}
             <h3 style={{ marginBottom: '15px' }}>⚔️ Campo de Batalha</h3>

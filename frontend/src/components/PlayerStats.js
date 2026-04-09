@@ -29,6 +29,26 @@ export default function PlayerStats({ player }) {
       <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #34495e' }}>
         <p style={{ fontSize: '12px' }}>Cartas na mão: {player.hand?.length || 0}/5</p>
         <p style={{ fontSize: '12px' }}>Cartas no campo: {player.field?.filter(c => c)?.length || 0}/6</p>
+        
+        {player.consecutiveSaves > 0 && (
+          <div style={{ 
+            marginTop: '10px', 
+            padding: '5px 10px', 
+            background: player.consecutiveSaves >= 2 ? '#2ecc7133' : '#34495e',
+            borderRadius: '4px',
+            fontSize: '11px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            border: player.consecutiveSaves >= 2 ? '1px solid #2ecc71' : '1px solid transparent'
+          }}>
+            <span style={{ filter: player.consecutiveSaves >= 2 ? 'none' : 'grayscale(1)' }}>🍀</span>
+            {player.consecutiveSaves >= 2 
+              ? <strong style={{color: '#2ecc71'}}>Proteção contra Azar Ativa! (+1 Dado)</strong>
+              : <span>Proteção contra Azar: {player.consecutiveSaves}/2</span>
+            }
+          </div>
+        )}
       </div>
     </div>
   );

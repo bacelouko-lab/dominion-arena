@@ -48,6 +48,7 @@ class GameLogic {
       copiedSynergyLevel: 0,
       rerollsRemaining: 2,
       hasRerolled: false,
+      consecutiveSaves: 0,
       connected: true
     };
     this.playerOrder.push(playerId);
@@ -62,6 +63,11 @@ class GameLogic {
     let diceCount = 1;
     const bonusDice = Math.floor(player.savedPoints / 4);
     diceCount += bonusDice;
+    
+    // Proteção contra azar (Bad Luck Protection / Pity System)
+    if (player.consecutiveSaves >= 2) {
+      diceCount = Math.max(diceCount, 2);
+    }
     
     if (player.synergies?.regions?.['Céu'] >= 3) {
       diceCount = Math.max(diceCount, 2);
@@ -206,6 +212,12 @@ class GameLogic {
     
     player.diceRolls = rolls;
     player.gold = totalGold;
+    
+    // Consumir proteção contra azar se rolou 2 ou mais dados
+    if (diceCount >= 2 && player.consecutiveSaves >= 2) {
+      console.log(`🍀 Proteção de Azar: ${player.username} rolou ${diceCount} dados por guardar pontos consecutivamente!`);
+      player.consecutiveSaves = 0;
+    }
     
     console.log(`🎲 ${player.username} rolou ${rolls.join(', ')} = ${totalGold} pontos`);
     if (hasLakeNv6) console.log(`🌊 Lago Nv6: todos os dados são 6!`);
@@ -397,9 +409,11 @@ class GameLogic {
       // O ouro deve apenas SOMA no cofre
       player.savedPoints += pointsToSave;
       player.gold = 0;
+      player.consecutiveSaves++;
       this.phase = 'combat';
     } else {
       // Deletado: O cofre não pode ser zerado ao abrir a aba shop!
+      player.consecutiveSaves = 0;
       this.generateShop(playerId);
       this.phase = 'buy';
     }
