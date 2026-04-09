@@ -1,14 +1,14 @@
 const SOUNDS = {
-  dice: 'https://assets.mixkit.co/sfx/preview/mixkit-dice-roll-on-wooden-table-1110.mp3',
-  buy: 'https://assets.mixkit.co/sfx/preview/mixkit-coins-handling-1939.mp3',
-  place: 'https://assets.mixkit.co/sfx/preview/mixkit-quick-positive-video-game-notification-2603.mp3',
-  attack: 'https://assets.mixkit.co/sfx/preview/mixkit-sword-strikes-armor-2761.mp3',
-  heal: 'https://assets.mixkit.co/sfx/preview/mixkit-magic-sparkle-shimmer-2218.mp3',
-  evolve: 'https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3',
-  turn: 'https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3',
-  victory: 'https://assets.mixkit.co/sfx/preview/mixkit-clapping-male-crowd-439.mp3',
-  defeat: 'https://assets.mixkit.co/sfx/preview/mixkit-ominous-drums-227.mp3',
-  click: 'https://assets.mixkit.co/sfx/preview/mixkit-modern-click-box-check-1120.mp3'
+  dice: '/sounds/dice.mp3',
+  buy: '/sounds/buy.mp3',
+  place: '/sounds/place.mp3',
+  attack: '/sounds/attack.mp3',
+  heal: '/sounds/heal.mp3',
+  evolve: '/sounds/evolve.mp3',
+  turn: '/sounds/turn.mp3',
+  victory: '/sounds/victory.mp3',
+  defeat: '/sounds/defeat.mp3',
+  click: '/sounds/click.mp3'
 };
 
 class SoundManager {
