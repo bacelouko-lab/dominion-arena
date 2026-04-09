@@ -36,9 +36,24 @@ export default function GameBoard({ gameState, gameId, username }) {
   
   const [muted, setMuted] = useState(soundManager.isMuted());
 
+  const [waitingForPlayer, setWaitingForPlayer] = useState(null);
+  const [disconnectionCountdown, setDisconnectionCountdown] = useState(0);
+
   const effectiveCurrentPlayerId = currentPlayerId || (players.length > 0 ? players[0]?.playerId : null);
   const isMyTurn = effectiveCurrentPlayerId && currentPlayer?.playerId === effectiveCurrentPlayerId && currentPlayer?.username === username;
   const isMyTurnAndAlive = isMyTurn && phase !== 'end' && currentPlayer?.life > 0 && !gameWinner;
+
+  useEffect(() => {
+    let timer = null;
+    if (waitingForPlayer && disconnectionCountdown > 0) {
+      timer = setInterval(() => {
+        setDisconnectionCountdown(prev => Math.max(0, prev - 1));
+      }, 1000);
+    } else if (disconnectionCountdown === 0) {
+      setWaitingForPlayer(null);
+    }
+    return () => { if (timer) clearInterval(timer); };
+  }, [waitingForPlayer, disconnectionCountdown]);
 
   // ========== SISTEMA DE ÁUDIO & UNLOCK ==========
   useEffect(() => {
@@ -131,6 +146,10 @@ export default function GameBoard({ gameState, gameId, username }) {
     };
   }, [socket, gameId, username, currentPlayer]);
 
+  const toggleMute = () => {
+    const newMuted = !muted;
+    setMuted(newMuted);
+    soundManager.setMuted(newMuted);
     if (!newMuted) soundManager.play('click');
   };
 
@@ -233,6 +252,8 @@ export default function GameBoard({ gameState, gameId, username }) {
       setRound(state.round || 1);
       setCurrentPlayerId(state.currentPlayerId || null);
       setShop(state.shop || []);
+      // Se mudo o turno, limpamos espera
+      setWaitingForPlayer(null);
     });
     socket.on('dice-rolled', ({ playerId, rolls, totalGold, diceCount, savedPoints }) => {
       soundManager.play('dice');
@@ -311,6 +332,7 @@ export default function GameBoard({ gameState, gameId, username }) {
       setHasFinishedBuy(false);
       setHasFinishedPosition(false);
       setPhase('roll');
+      setWaitingForPlayer(null); // Limpa espera
       socket.emit('calculate-synergies');
     });
     socket.on('combat-resolved', ({ attacker, defender, netDamage }) => {
@@ -342,20 +364,16 @@ export default function GameBoard({ gameState, gameId, username }) {
       soundManager.play('coin');
     });
     // Evento de jogador desconectado (avisar que alguém caiu)
-    socket.on('player-disconnected', ({ playerId, username }) => {
-      console.log(`⚠️ Jogador ${username} desconectou. Aguardando reconexão...`);
-      const notification = document.createElement('div');
-      notification.textContent = `${username} desconectou. Tentando reconectar...`;
-      notification.style.position = 'fixed';
-      notification.style.bottom = '20px';
-      notification.style.right = '20px';
-      notification.style.background = '#e94560';
-      notification.style.color = 'white';
-      notification.style.padding = '10px 20px';
-      notification.style.borderRadius = '8px';
-      notification.style.zIndex = '2000';
-      document.body.appendChild(notification);
-      setTimeout(() => notification.remove(), 4000);
+    socket.on('player-disconnected', ({ playerId, username, timeoutMs }) => {
+      console.log(`⚠️ Jogador ${username} desconectou. Aguardando ${timeoutMs/1000}s...`);
+      setWaitingForPlayer(username);
+      setDisconnectionCountdown(timeoutMs / 1000);
+    });
+
+    socket.on('player-reconnected', ({ playerId, username }) => {
+      console.log(`✅ Jogador ${username} reconectou!`);
+      setWaitingForPlayer(null);
+      setDisconnectionCountdown(0);
     });
 
     return () => {
@@ -503,6 +521,33 @@ export default function GameBoard({ gameState, gameId, username }) {
       }}></div>
 
       <div style={{ position: 'relative', zIndex: 2, padding: '20px' }}>
+      
+      {/* MODAL DE DESCONEXÃO / ESPERA */}
+      {waitingForPlayer && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.85)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 9999,
+          backdropFilter: 'blur(5px)'
+        }}>
+          <div className="card" style={{ padding: '40px', textAlign: 'center', border: '2px solid #e94560' }}>
+            <h2 style={{ color: '#e94560', marginBottom: '10px' }}>⚠️ JOGADOR DESCONECTADO</h2>
+            <p>Aguardando retorno de <strong>{waitingForPlayer}</strong></p>
+            <div style={{ fontSize: '48px', fontWeight: 'bold', margin: '20px 0', color: '#fff' }}>
+              {disconnectionCountdown}s
+            </div>
+            <p style={{ fontSize: '13px', color: '#888' }}>O jogador será eliminado após o tempo expirar.</p>
+          </div>
+        </div>
+      )}
+
       <button 
         onClick={toggleMute}
         style={{

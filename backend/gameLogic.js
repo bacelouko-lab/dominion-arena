@@ -1141,7 +1141,8 @@ class GameLogic {
         copiedSynergyLevel: p.copiedSynergyLevel,
         anjoGovernanteBonus: p.anjoGovernanteBonus,
         rerollsRemaining: p.rerollsRemaining,
-        isCurrentTurn: p.playerId === currentPlayer?.playerId
+        isCurrentTurn: p.playerId === currentPlayer?.playerId,
+        connected: p.connected
       }))
     };
   }

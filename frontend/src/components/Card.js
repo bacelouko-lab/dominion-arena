@@ -66,7 +66,7 @@ export default function Card({ card, onClick, onSell, isShop = false }) {
             style={{
               position: 'absolute',
               bottom: '5px',
-              right: '5px',
+              left: '5px',
               width: '28px',
               height: '28px',
               borderRadius: '50%',
@@ -158,5 +158,4 @@ export default function Card({ card, onClick, onSell, isShop = false }) {
       </div>
     </>
   );
-}
 }

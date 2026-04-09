@@ -594,6 +594,30 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('reconnect-game', ({ gameId, username, playerId }) => {
+    const game = games.get(gameId);
+    if (!game) return;
+
+    if (game.players[playerId]) {
+      game.players[playerId].connected = true;
+      socket.gameId = gameId;
+      socket.playerId = playerId;
+      socket.username = username;
+      socket.join(gameId);
+      
+      // LIMPAR TIMER DE DESCONEXÃO
+      const timerKey = `${gameId}-${playerId}`;
+      if (disconnectTimers.has(timerKey)) {
+        clearTimeout(disconnectTimers.get(timerKey));
+        disconnectTimers.delete(timerKey);
+        console.log(`✅ Timer de desconexão limpo para ${username}.`);
+      }
+
+      io.to(gameId).emit('player-reconnected', { playerId, username });
+      io.to(gameId).emit('game-state', game.getGameState());
+    }
+  });
+
   socket.on('disconnect', () => {
     console.log(`User disconnected: ${socket.id}`);
     const gameId = socket.gameId;
@@ -601,57 +625,58 @@ io.on('connection', (socket) => {
     if (gameId && playerId) {
       const game = games.get(gameId);
       if (game) {
-        // Se o jogo já acabou, não precisamos de timer de desconexão
-        if (game.phase === 'end') {
-          console.log(`ℹ️ Jogador ${playerId} saiu de um jogo finalizado.`);
-          return;
-        }
+        if (game.phase === 'end') return;
 
         if (game.turn === 0) {
-          // Se ainda está no lobby, deleta pra sempre liberando a vaga
           delete game.players[playerId];
           game.playerOrder = game.playerOrder.filter(id => id !== playerId);
           io.to(gameId).emit('player-left', { playerId });
         } else {
-          // Graça / Tolerância de 60 Segundos
           const player = game.players[playerId];
           if (player) {
             player.connected = false;
-            io.to(gameId).emit('player-disconnected', { playerId, username: player.username });
+            
+            // Notificar todos sobre a desconexão e o tempo de espera
+            io.to(gameId).emit('player-disconnected', { 
+              playerId, 
+              username: player.username,
+              timeoutMs: 60000 
+            });
+            
             console.log(`⏳ ${player.username} desconectou. Aguardando 60s antes de eliminar...`);
 
             const timerKey = `${gameId}-${playerId}`;
             const timerId = setTimeout(async () => {
-              // Verifica novamente se o jogador ainda está desconectado após o limite de tempo
               const checkGame = games.get(gameId);
-              if (checkGame && checkGame.phase === 'end') {
-                console.log(`ℹ️ Ignorando timeout de desconexão para o jogador ${playerId} (partida já encerrada).`);
+              if (!checkGame || checkGame.phase === 'end') {
                 disconnectTimers.delete(timerKey);
                 return;
               }
-              if (checkGame && checkGame.players[playerId] && !checkGame.players[playerId].connected) {
+
+              if (checkGame.players[playerId] && !checkGame.players[playerId].connected) {
                 console.log(`💀 ${player.username} não voltou a tempo e foi eliminado.`);
-                checkGame.players[playerId].life = 0; // "Eliminado por desconexão"
+                
+                // IMPORTANTE: Verificar se era a vez dele ANTES de eliminar
+                const currentPlayerBefore = checkGame.getCurrentPlayer();
+                const wasHisTurn = currentPlayerBefore && currentPlayerBefore.playerId === playerId;
+                
+                checkGame.players[playerId].life = 0;
                 checkGame.recordElimination(playerId);
 
                 io.to(gameId).emit('player-eliminated', { playerId, username: player.username });
                 io.to(gameId).emit('player-left', { playerId });
                 disconnectTimers.delete(timerKey);
                 
-                // VERIFICAÇÃO DE VITÓRIA POR WO (Desistência/Time-out)
+                // VERIFICAÇÃO DE VITÓRIA POR WO
                 const alivePlayers = Object.values(checkGame.players).filter(p => p.life > 0);
                 if (alivePlayers.length === 1 && checkGame.phase !== 'end') {
                   const winner = alivePlayers[0];
                   checkGame.phase = 'end';
-                  console.log(`🏆 FIM DE JOGO POR W.O.! ${winner.username} venceu.`);
                   
                   const finalRanking = [winner.playerId, ...[...checkGame.eliminations].reverse()];
-                  
                   try {
                     await saveMatch(checkGame, finalRanking);
-                  } catch (err) {
-                    console.error('❌ Erro ao salvar partida (WO):', err);
-                  }
+                  } catch (err) { console.error('WO Save Error:', err); }
 
                   io.to(gameId).emit('game-over', { 
                     winner: { playerId: winner.playerId, username: winner.username },
@@ -660,28 +685,21 @@ io.on('connection', (socket) => {
                       username: checkGame.players[id]?.username 
                     }))
                   });
-
-                  // Limpeza da memória
-                  setTimeout(() => {
-                    if (games.has(gameId)) {
-                      console.log(`🧹 Limpeza: Removendo jogo finalizado ${gameId} após W.O.`);
-                      games.delete(gameId);
-                      readyPlayersMap.delete(gameId);
-                    }
-                  }, 120000);
                   return;
                 }
 
-                // Se o jogo continua, vira o turno se era a vez dele
-                const currentPlayer = checkGame.getCurrentPlayer();
-                if (currentPlayer && currentPlayer.playerId === playerId) {
+                // FORÇAR PASSAGEM DE TURNO SE ERA A VEZ DELE
+                if (wasHisTurn) {
+                  console.log(`⏩ Passando turno do jogador eliminado por desconexão...`);
                   const result = checkGame.endCurrentTurn();
                   io.to(gameId).emit('game-state', checkGame.getGameState());
                   io.to(gameId).emit('turn-ended', result);
-                  io.to(gameId).emit('phase-changed', { phase: 'roll', turn: result.turn, nextPlayerId: result.nextPlayerId });
+                } else {
+                  // Apenas atualiza o estado para todos verem que ele morreu
+                  io.to(gameId).emit('game-state', checkGame.getGameState());
                 }
               }
-            }, 60000); // 60 segundos
+            }, 60000);
             
             disconnectTimers.set(timerKey, timerId);
           }
