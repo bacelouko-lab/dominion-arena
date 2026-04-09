@@ -58,42 +58,8 @@ export default function Card({ card, onClick, onSell, isShop = false }) {
           }}
         />
 
-        {/* Botão de Venda (Apenas se não for Loja) */}
-        {!isShop && onSell && (
-          <button
-            onClick={handleSell}
-            title="Vender Carta"
-            style={{
-              position: 'absolute',
-              bottom: '5px',
-              left: '5px',
-              width: '28px',
-              height: '28px',
-              borderRadius: '50%',
-              background: '#e94560',
-              border: '2px solid #fff',
-              color: 'white',
-              fontSize: '14px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 10,
-              boxShadow: '0 2px 10px rgba(0,0,0,0.5)',
-              transition: 'transform 0.2s, background 0.2s'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.transform = 'scale(1.2)';
-              e.target.style.background = '#ff4d4d';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.transform = 'scale(1)';
-              e.target.style.background = '#e94560';
-            }}
-          >
-            💰
-          </button>
-        )}
+        {/* Botão de Venda removido a pedido do usuário para não tampar os stats */}
+
 
         {/* Tooltip com informações da carta */}
         {showTooltip && (

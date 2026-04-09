@@ -27,6 +27,7 @@ export default function GameBoard({ gameState, gameId, username }) {
   const [hasFinishedPosition, setHasFinishedPosition] = useState(false);
   
   const [draggedCardIndex, setDraggedCardIndex] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
   
   // Estados para Anjo Governante (id:16)
   const [anjoBonus, setAnjoBonus] = useState(0);
@@ -185,10 +186,21 @@ export default function GameBoard({ gameState, gameId, username }) {
   }, [gameState]);
 
   const handleDragStart = (e, fromData) => {
-    if (!isMyTurnAndAlive || phase !== 'position') return;
-    setDraggedCardIndex(fromData); // Agora é um objeto {type, index}
+    if (!isMyTurnAndAlive) return;
+    
+    // Permitimos arrastar na fase de compra APENAS se for para vender (da mão ou campo)
+    // Na fase de posicionamento, permitimos tudo.
+    if (phase !== 'buy' && phase !== 'position') return;
+    
+    setDraggedCardIndex(fromData); 
+    setIsDragging(true);
     e.dataTransfer.setData('application/json', JSON.stringify(fromData));
     e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    setDraggedCardIndex(null);
   };
 
   const handleDragOver = (e) => {
@@ -198,6 +210,7 @@ export default function GameBoard({ gameState, gameId, username }) {
 
   const handleDrop = (e, toData) => {
     e.preventDefault();
+    setIsDragging(false);
     if (!isMyTurnAndAlive || phase !== 'position') return;
     
     let fromData = draggedCardIndex;
@@ -216,6 +229,27 @@ export default function GameBoard({ gameState, gameId, username }) {
       socket.emit('reposition-card', { from: fromData, to: toData });
       setDraggedCardIndex(null);
     }
+  };
+
+  const handleSellDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (!isMyTurnAndAlive) return;
+
+    const fromData = draggedCardIndex;
+    if (!fromData) return;
+
+    let card;
+    if (fromData.type === 'hand') {
+      card = currentPlayerObj?.hand[fromData.index];
+    } else if (fromData.type === 'field') {
+      card = currentPlayerObj?.field[fromData.index];
+    }
+
+    if (card) {
+      handleSellCard(card, fromData.type === 'field');
+    }
+    setDraggedCardIndex(null);
   };
 
   const returnCardToShop = (card) => {
@@ -596,6 +630,7 @@ export default function GameBoard({ gameState, gameId, username }) {
                 hand={currentPlayerObj?.hand || []} 
                 gameId={gameId} 
                 onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
                 onDrop={handleDrop}
                 onSell={handleSellCard} 
               />
@@ -604,6 +639,7 @@ export default function GameBoard({ gameState, gameId, username }) {
               field={currentPlayerObj?.field || []} 
               gameId={gameId} 
               onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
               onDrop={handleDrop}
               onSell={handleSellCard} 
             />
@@ -636,6 +672,7 @@ export default function GameBoard({ gameState, gameId, username }) {
               <Hand 
                 hand={currentPlayerObj?.hand || []} 
                 onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
                 onDrop={handleDrop}
                 onSell={handleSellCard}
               />
@@ -643,6 +680,7 @@ export default function GameBoard({ gameState, gameId, username }) {
             <Field 
               field={currentPlayerObj?.field || []} 
               onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onSell={handleSellCard}
@@ -734,6 +772,46 @@ export default function GameBoard({ gameState, gameId, username }) {
         
         <Synergies synergies={synergies} />
       </div>
+
+      {/* ZONA DE VENDA (SELL ZONE) */}
+      {isDragging && (phase === 'buy' || phase === 'position') && (
+        <div 
+          onDragOver={handleDragOver}
+          onDrop={handleSellDrop}
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '400px',
+            height: '100px',
+            background: 'linear-gradient(180deg, rgba(233, 69, 96, 0.2) 0%, rgba(233, 69, 96, 0.4) 100%)',
+            border: '2px dashed #e94560',
+            borderRadius: '15px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000,
+            animation: 'pulse-red 1.5s infinite ease-in-out',
+            color: 'white',
+            backdropFilter: 'blur(5px)'
+          }}
+        >
+          <div style={{ fontSize: '32px', marginBottom: '5px' }}>💰</div>
+          <div style={{ fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>Vender Carta</div>
+          <div style={{ fontSize: '12px', color: '#ffcc00' }}>Receba 100% do valor de volta</div>
+        </div>
+      )}
+
+      <style jsx>{`
+        @keyframes pulse-red {
+          0% { box-shadow: 0 0 0 0 rgba(233, 69, 96, 0.7); }
+          70% { box-shadow: 0 0 0 20px rgba(233, 69, 96, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(233, 69, 96, 0); }
+        }
+      `}</style>
+
      </div>
     </div>
    </div>

@@ -1,7 +1,7 @@
 import React from 'react';
 import Card from './Card';
 
-export default function Hand({ hand, onDragStart, onDrop, onSell }) {
+export default function Hand({ hand, onDragStart, onDragEnd, onDrop, onSell }) {
   const handleDragOver = (e) => {
     e.preventDefault();
   };
@@ -61,6 +61,7 @@ export default function Hand({ hand, onDragStart, onDrop, onSell }) {
               key={card.instanceId || index}
               draggable={true}
               onDragStart={(e) => onDragStart && onDragStart(e, { type: 'hand', index })}
+              onDragEnd={onDragEnd}
             >
               <Card 
                 card={card} 

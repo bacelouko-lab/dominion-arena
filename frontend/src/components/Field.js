@@ -1,7 +1,7 @@
 import React from 'react';
 import Card from './Card';
 
-export default function Field({ field, onDrop, onDragStart, onDragOver, onSell, isDropTarget = false }) {
+export default function Field({ field, onDrop, onDragStart, onDragEnd, onDragOver, onSell, isDropTarget = false }) {
   const handleSlotDrop = (e, index) => {
     e.preventDefault();
     if (onDrop) {
@@ -62,6 +62,7 @@ export default function Field({ field, onDrop, onDragStart, onDragOver, onSell, 
               <div 
                 draggable={isDropTarget} 
                 onDragStart={(e) => onDragStart && onDragStart(e, { type: 'field', index })}
+                onDragEnd={onDragEnd}
               >
                 <Card 
                   card={card} 
