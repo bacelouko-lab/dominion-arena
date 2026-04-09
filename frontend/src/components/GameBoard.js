@@ -40,6 +40,24 @@ export default function GameBoard({ gameState, gameId, username }) {
   const isMyTurn = effectiveCurrentPlayerId && currentPlayer?.playerId === effectiveCurrentPlayerId && currentPlayer?.username === username;
   const isMyTurnAndAlive = isMyTurn && phase !== 'end' && currentPlayer?.life > 0 && !gameWinner;
 
+  // ========== SISTEMA DE ÁUDIO & UNLOCK ==========
+  useEffect(() => {
+    const handleFirstClick = () => {
+      soundManager.unlock();
+      // Remove o listener após o primeiro clique bem sucedido
+      window.removeEventListener('mousedown', handleFirstClick);
+      window.removeEventListener('touchstart', handleFirstClick);
+    };
+
+    window.addEventListener('mousedown', handleFirstClick);
+    window.addEventListener('touchstart', handleFirstClick);
+
+    return () => {
+      window.removeEventListener('mousedown', handleFirstClick);
+      window.removeEventListener('touchstart', handleFirstClick);
+    };
+  }, []);
+
   // ========== SISTEMA DE RECONEXÃO ==========
   useEffect(() => {
     if (!socket) return;
@@ -441,7 +459,13 @@ export default function GameBoard({ gameState, gameId, username }) {
   }
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div 
+      style={{ position: 'relative' }}
+      onClick={() => {
+        // Garantia extra: qualquer clique no tabuleiro tenta desbloquear o som
+        if (!soundManager.initialized) soundManager.unlock();
+      }}
+    >
       {/* Botão de Som */}
       <button 
         onClick={toggleMute}
