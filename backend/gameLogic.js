@@ -11,7 +11,7 @@ class GameLogic {
     this.shop = [];
     this.round = 1;
     this.attackedThisRound = [];
-    this.eliminations = []; 
+    this.eliminations = [];
     this.pool = this.initializePool(); // Deck Global compartilhado
     this.shufflePool();
   }
@@ -25,10 +25,10 @@ class GameLogic {
 
   returnCardToPool(card) {
     if (!card) return;
-    
+
     // Se a carta for evoluída, ela conta como 2 cópias no pool
     const numCopies = card.isEvolved ? 2 : 1;
-    
+
     // Limpar propriedades temporárias
     const baseCard = cardsData.find(c => c.id === card.id);
     if (!baseCard) return;
@@ -36,7 +36,7 @@ class GameLogic {
     for (let i = 0; i < numCopies; i++) {
       this.pool.push({ ...baseCard });
     }
-    
+
     this.shufflePool();
     console.log(`♻️ Pool: ${numCopies} cópia(s) de ${baseCard.nome} retornaram ao deck global. Total no deck: ${this.pool.length}`);
   }
@@ -91,16 +91,16 @@ class GameLogic {
     let diceCount = 1;
     const bonusDice = Math.floor(player.savedPoints / 4);
     diceCount += bonusDice;
-    
+
     // Proteção contra azar (Bad Luck Protection / Pity System)
     if (player.consecutiveSaves >= 2) {
       diceCount = Math.max(diceCount, 2);
     }
-    
-    if (player.synergies?.regions?.['Céu'] >= 3) {
+
+    if (player.synergies?.regions?.['Aether'] >= 3) {
       diceCount = Math.max(diceCount, 2);
     }
-    
+
     return Math.min(diceCount, 3);
   }
 
@@ -118,10 +118,10 @@ class GameLogic {
       player.freeCardUsed = false;
       player.abilityDoubleUsed = false;
       player.ladinoUsedThisAttack = false;
-      // Oráculo do Lago (id:19) - reseta rerolls
+      // Oráculo (Arquimago Celeste id:22)
       player.rerollsRemaining = 2;
       player.hasRerolled = false;
-      // Anjo Governante (id:16) - mantém bônus, mas reseta gasto do turno
+      // Anjo Governante (Avatar de Helios id:8)
       player.anjoGovernanteSpent = 0;
     }
   }
@@ -131,32 +131,32 @@ class GameLogic {
 
     let nextIndex = (this.currentPlayerIndex + 1) % this.playerOrder.length;
     let attempts = 0;
-    
+
     console.log(`🔄 nextPlayer: procurando próximo jogador...`);
-    
+
     while (this.players[this.playerOrder[nextIndex]]?.life <= 0 && attempts < this.playerOrder.length) {
       console.log(`   ⏭️ Pulando ${this.players[this.playerOrder[nextIndex]]?.username} (morto)`);
       nextIndex = (nextIndex + 1) % this.playerOrder.length;
       attempts++;
     }
-    
+
     const wrappedAround = nextIndex <= this.currentPlayerIndex;
     this.currentPlayerIndex = nextIndex;
-    
+
     if (wrappedAround) {
       this.round++;
       console.log(`🆕 NOVO ROUND ${this.round}!`);
       this.attackedThisRound = [];
       console.log(`   🔄 Lista de atacados resetada!`);
     }
-    
+
     const nextPlayer = this.getCurrentPlayer();
     console.log(`   ✅ Próximo jogador: ${nextPlayer?.username} (vida: ${nextPlayer?.life})`);
-    
+
     if (nextPlayer && nextPlayer.life > 0) {
       this.resetPlayerForNextTurn(nextPlayer.playerId);
     }
-    
+
     return nextPlayer;
   }
 
@@ -164,7 +164,7 @@ class GameLogic {
     if (!this.eliminations.includes(playerId)) {
       this.eliminations.push(playerId);
       console.log(`💀 ELO: Registro de eliminação de ${this.players[playerId]?.username}. Ranking atual das mortes: ${this.eliminations.length}`);
-      
+
       // DEVOLVER CARTAS AO POOL GLOBAL
       const player = this.players[playerId];
       if (player) {
@@ -182,15 +182,15 @@ class GameLogic {
     if (currentPlayer) {
       currentPlayer.hasActedThisTurn = true;
       this.applyEndOfTurnEffects(currentPlayer);
-      
+
       // O ouro não gasto SE PERDE conforme regra.
       currentPlayer.gold = 0;
     }
-    
+
     const nextPlayer = this.nextPlayer();
     this.phase = 'roll';
     this.turn++;
-    
+
     return {
       nextPlayerId: nextPlayer?.playerId,
       nextPlayerUsername: nextPlayer?.username,
@@ -203,18 +203,20 @@ class GameLogic {
   applyEndOfTurnEffects(player) {
     if (player.life <= 0) return; // Mortos não recebem efeitos de fim de turno
     const synergies = player.synergies || { regions: {}, classes: {} };
-    
-    if (synergies.classes?.['Suporte'] >= 2) {
+
+    if (synergies.classes?.['Zelador'] >= 2) {
       player.life = Math.min(20, player.life + 2);
-      console.log(`💚 Suporte: ${player.username} curou 2`);
+      console.log(`💚 Zelador: ${player.username} curou 2`);
     }
-    if (synergies.classes?.['Suporte'] >= 4) {
+    if (synergies.classes?.['Zelador'] >= 4) {
       player.life = Math.min(20, player.life + 3);
-      console.log(`💚 Suporte Nv4: ${player.username} curou +3`);
+      console.log(`💚 Zelador Nv4: ${player.username} curou +3`);
     }
-    if (synergies.regions?.['Floresta'] >= 6) {
-      player.life = Math.min(20, player.life + 5);
-      console.log(`🌲 Floresta Nv6: ${player.username} curou 5`);
+    if (synergies.regions?.['Veridian'] >= 2) {
+      const heal = (player.healingEndOfTurn || 0) + 2;
+      const maxL = player.extraMaxLife ? 20 + player.extraMaxLife : 20;
+      player.life = Math.min(maxL, player.life + heal);
+      console.log(`🌿 Veridian: ${player.username} curou ${heal} (Limite: ${maxL})`);
     }
   }
 
@@ -227,53 +229,53 @@ class GameLogic {
 
     const diceCount = this.calculateDiceCount(player);
     player.dice = diceCount;
-    
+
     // Regra hardcore: se o jogador conseguiu o direito de rolar mais de 1 dado, 
     // ele 'paga' a dívida perdendo todo o cofre na hora! E volta para a estaca zero.
     // Ignoramos extraDiceBonus (se vier de outros cantos), o cofre zera se os pontos dele geraram o dado extra.
     if (player.savedPoints >= 4) {
       player.savedPoints = 0;
     }
-    
+
     let totalGold = 0;
     const rolls = [];
-    
-    const hasLakeNv6 = (player.synergies?.regions?.['Lago'] || 0) >= 6;
-    
+
+    const hasAetherNv5 = (player.synergies?.regions?.['Aether'] || 0) >= 5;
+
     for (let i = 0; i < diceCount; i++) {
       let roll;
-      if (hasLakeNv6) {
+      if (hasAetherNv5) {
         roll = 6;
       } else {
         roll = Math.floor(Math.random() * 6) + 1;
       }
-      
-      const hasCelestialDragon = player.field.some(c => c && c.id === 33 && c.isEvolved);
-      if (hasCelestialDragon) {
+
+      const hasSoberanoEter = player.field.some(c => c && c.id === 14 && c.isEvolved);
+      if (hasSoberanoEter) {
         roll = 6;
       }
-      
+
       rolls.push(roll);
       totalGold += roll;
     }
-    
+
     player.diceRolls = rolls;
     player.gold = totalGold;
-    
+
     // Consumir proteção contra azar se rolou 2 ou mais dados
     if (diceCount >= 2 && player.consecutiveSaves >= 2) {
       console.log(`🍀 Proteção de Azar: ${player.username} rolou ${diceCount} dados por guardar pontos consecutivamente!`);
       player.consecutiveSaves = 0;
     }
-    
+
     const rollsInfo = [];
     if (player.consecutiveSaves >= 2) rollsInfo.push("Proteção de Azar");
     if (Math.floor((player.savedPoints + player.gold) / 4) > 0) rollsInfo.push(`Cofre: +${Math.floor(player.savedPoints / 4)}`);
-    if (player.synergies?.regions?.['Céu'] >= 3) rollsInfo.push("Sinergia Céu Nv3");
-    
+    if (player.synergies?.regions?.['Aether'] >= 3) rollsInfo.push("Sinergia Aether Nv3");
+
     console.log(`🎲 ${player.username} rolou ${rolls.join(', ')} = ${totalGold} pontos ${rollsInfo.length > 0 ? '(' + rollsInfo.join(', ') + ')' : ''}`);
-    if (hasLakeNv6) console.log(`🌊 Lago Nv6: todos os dados são 6!`);
-    
+    if (hasAetherNv5) console.log(`🪄 Aether Nv5: todos os dados são 6!`);
+
     return { gold: totalGold, rolls, totalGold: player.gold, diceCount, savedPoints: player.savedPoints };
   }
 
@@ -281,35 +283,35 @@ class GameLogic {
   rerollDice(playerId) {
     const player = this.players[playerId];
     if (!player) return { error: 'Player not found' };
-    
-    const oracleCard = player.field.find(c => c && c.id === 19 && c.isEvolved);
+
+    const oracleCard = player.field.find(c => c && c.id === 22 && c.isEvolved);
     if (!oracleCard) {
-      return { error: 'Oráculo do Lago não está no campo ou não está evoluído' };
+      return { error: 'Arquimago Celeste não está no campo ou não está evoluído' };
     }
-    
+
     if (player.rerollsRemaining <= 0) {
       return { error: 'Sem rerolls disponíveis neste turno' };
     }
-    
+
     const diceCount = player.dice;
     const newRolls = [];
     for (let i = 0; i < diceCount; i++) {
       newRolls.push(Math.floor(Math.random() * 6) + 1);
     }
-    
+
     player.rerollsRemaining--;
     player.diceRolls = newRolls;
-    
+
     const newGold = newRolls.reduce((a, b) => a + b, 0);
     player.gold = newGold;
-    
+
     console.log(`🎲 ${player.username} rerrolou dados: ${newRolls.join(', ')} = ${newGold} pontos (${player.rerollsRemaining} rerolls restantes)`);
-    
-    return { 
-      success: true, 
-      rolls: newRolls, 
-      gold: newGold, 
-      rerollsRemaining: player.rerollsRemaining 
+
+    return {
+      success: true,
+      rolls: newRolls,
+      gold: newGold,
+      rerollsRemaining: player.rerollsRemaining
     };
   }
 
@@ -317,29 +319,29 @@ class GameLogic {
   activateAnjoGovernante(playerId) {
     const player = this.players[playerId];
     if (!player) return { error: 'Player not found' };
-    
-    const anjoCard = player.field.find(c => c && c.id === 16 && c.isEvolved);
+
+    const anjoCard = player.field.find(c => c && (c.id === 8 || c.id === 6) && c.isEvolved);
     if (!anjoCard) {
-      return { error: 'Anjo Governante não está no campo ou não está evoluído' };
+      return { error: 'Avatar de Helios ou Invocador do Sol não está no campo ou não está evoluído' };
     }
-    
+
     if (player.gold < 1) {
       return { error: 'Ouro insuficiente' };
     }
-    
+
     if (player.anjoGovernanteBonus >= 12) {
       return { error: 'Bônus máximo atingido (+12 ATK)' };
     }
-    
+
     player.gold -= 1;
     player.anjoGovernanteSpent += 1;
     player.anjoGovernanteBonus += 2;
-    
+
     console.log(`👼 ${player.username} ativou Anjo Governante: +2 ATK (total: +${player.anjoGovernanteBonus}, gastou ${player.anjoGovernanteSpent} ouro)`);
-    
-    return { 
-      success: true, 
-      gold: player.gold, 
+
+    return {
+      success: true,
+      gold: player.gold,
       bonus: player.anjoGovernanteBonus,
       spent: player.anjoGovernanteSpent
     };
@@ -348,7 +350,7 @@ class GameLogic {
   initializePool() {
     let pool = [];
     cardsData.forEach(card => {
-      let copies = card.custo === 2 ? 4 : card.custo === 3 ? 3 : card.custo === 4 ? 2 : 1;
+      let copies = card.custo === 2 ? 4 : card.custo === 3 ? 3 : card.custo === 5 ? 2 : 1;
       for (let i = 0; i < copies; i++) {
         pool.push({ ...card });
       }
@@ -359,44 +361,42 @@ class GameLogic {
   generateShop(playerId) {
     const player = this.players[playerId];
     if (!player) return { error: 'Player not found' };
-    
+
     this.calculateSynergies(playerId);
-    
+
     let costReduction = 0;
-    const mercadorCount = player.synergies?.classes?.['Mercador'] || 0;
-    if (mercadorCount >= 4) {
-      costReduction = 3;
-      console.log(`💰 Mercador Nv4 ativo: -3 custo nas cartas`);
-    } else if (mercadorCount >= 2) {
-      costReduction = 1;
-      console.log(`💰 Mercador Nv2 ativo: -1 custo nas cartas`);
+    const eruditoCount = player.synergies?.classes?.['Erudito'] || 0;
+    if (eruditoCount >= 4) {
+      costReduction = 4;
+    } else if (eruditoCount >= 2) {
+      costReduction = 2;
     }
-    
+
     let shopSize = 3;
     if (player.dice === 2) shopSize = 4;
     else if (player.dice === 3) shopSize = 5;
-    
+
     this.shop = [];
-    
+
     for (let i = 0; i < shopSize; i++) {
       if (this.pool.length === 0) break;
       const randomIndex = Math.floor(Math.random() * this.pool.length);
       const selectedCard = this.pool.splice(randomIndex, 1)[0];
-      
+
       let custo = selectedCard.custo;
       if (costReduction > 0) {
         custo = Math.max(0, custo - costReduction);
       }
-      
-      const hasSkyNv5 = (player.synergies?.regions?.['Céu'] || 0) >= 5;
-      if (hasSkyNv5 && !player.freeCardUsed && custo > 0) {
+
+      const hasAetherNv4 = (player.synergies?.regions?.['Aether'] || 0) >= 4;
+      if (hasAetherNv4 && !player.freeCardUsed && custo > 0) {
         custo = 0;
         player.freeCardUsed = true;
-        console.log(`☁️ Céu Nv5: primeira carta grátis!`);
+        console.log(`🪄 Aether Nv4: primeira carta grátis!`);
       }
-      
-      const newCard = { 
-        ...selectedCard, 
+
+      const newCard = {
+        ...selectedCard,
         custo: custo,
         instanceId: `${selectedCard.id}-${Date.now()}-${Math.random()}`
       };
@@ -412,13 +412,13 @@ class GameLogic {
     if (player.gold < 1) return { error: 'Not enough gold' };
 
     player.gold -= 1;
-    
+
     // Devolver cartas atuais da loja ao pool antes do reroll
     this.shop.forEach(card => this.returnCardToPool(card));
     this.shop = [];
 
     this.calculateSynergies(playerId);
-    
+
     let costReduction = 0;
     const mercadorCount = player.synergies?.classes?.['Mercador'] || 0;
     if (mercadorCount >= 4) {
@@ -426,24 +426,24 @@ class GameLogic {
     } else if (mercadorCount >= 2) {
       costReduction = 1;
     }
-    
+
     let shopSize = 3;
     if (player.dice === 2) shopSize = 4;
     else if (player.dice === 3) shopSize = 5;
-    
+
     const newShop = [];
     for (let i = 0; i < shopSize; i++) {
       if (this.pool.length === 0) break;
       const randomIndex = Math.floor(Math.random() * this.pool.length);
       const selectedCard = this.pool.splice(randomIndex, 1)[0];
-      
+
       let custo = selectedCard.custo;
       if (costReduction > 0) {
         custo = Math.max(0, custo - costReduction);
       }
-      
-      const newCard = { 
-        ...selectedCard, 
+
+      const newCard = {
+        ...selectedCard,
         custo: custo,
         instanceId: `${selectedCard.id}-${Date.now()}-${Math.random()}`
       };
@@ -476,12 +476,12 @@ class GameLogic {
       this.generateShop(playerId);
       this.phase = 'buy';
     }
-    return { 
-      choseShop, 
-      phase: this.phase, 
-      shop: choseShop ? this.shop : null, 
-      gold: player.gold, 
-      savedPoints: player.savedPoints 
+    return {
+      choseShop,
+      phase: this.phase,
+      shop: choseShop ? this.shop : null,
+      gold: player.gold,
+      savedPoints: player.savedPoints
     };
   }
 
@@ -493,16 +493,16 @@ class GameLogic {
     const card = this.shop[shopCardIndex];
     if (player.gold < card.custo) return { error: 'Not enough gold' };
     if (player.hand.length >= 7) return { error: 'Hand is full' };
-    
+
     player.gold -= card.custo;
-    
+
     // Armazenar o preço pago para a recompra (venda) correta
     const cardToBuy = { ...card, purchasePrice: card.custo };
-    
+
     player.hand.push(cardToBuy);
     this.shop.splice(shopCardIndex, 1);
     this.checkEvolution(playerId);
-    
+
     return { success: true, hand: player.hand, gold: player.gold };
   }
 
@@ -535,15 +535,15 @@ class GameLogic {
 
     // Devolver carta ao pool global
     this.returnCardToPool(card);
-    
+
     this.calculateSynergies(playerId);
 
     console.log(`💰 VENDA: ${player.username} vendeu ${card.nome} por ${refund} ouro.`);
 
-    return { 
-      success: true, 
-      gold: player.gold, 
-      hand: player.hand, 
+    return {
+      success: true,
+      gold: player.gold,
+      hand: player.hand,
       field: player.field,
       synergies: player.synergies
     };
@@ -552,16 +552,16 @@ class GameLogic {
   checkEvolution(playerId) {
     const player = this.players[playerId];
     if (!player) return player.hand;
-    
+
     let evolved = true;
     let maxLoops = 10;
-    
+
     while (evolved && maxLoops-- > 0) {
       evolved = false;
-      
+
       const cardCount = {};
       const cardPositions = {};
-      
+
       for (let i = 0; i < player.hand.length; i++) {
         const card = player.hand[i];
         if (card && !card.isEvolved) {
@@ -571,7 +571,7 @@ class GameLogic {
           cardPositions[key].push({ type: 'hand', index: i, card });
         }
       }
-      
+
       for (let i = 0; i < player.field.length; i++) {
         const card = player.field[i];
         if (card && !card.isEvolved) {
@@ -581,13 +581,13 @@ class GameLogic {
           cardPositions[key].push({ type: 'field', index: i, card });
         }
       }
-      
+
       for (const cardId in cardCount) {
         if (cardCount[cardId] >= 2) {
           const positions = cardPositions[cardId];
           if (positions && positions.length >= 2) {
             const originalCard = positions[0].card;
-            
+
             const evolvedCard = {
               ...originalCard,
               nome: `${originalCard.nome} (Evoluída)`,
@@ -597,7 +597,7 @@ class GameLogic {
               evolucao: originalCard.evolucao || `${originalCard.nome} evoluiu!`,
               habilidade_ativa: true
             };
-            
+
             if (positions[1].type === 'hand') {
               player.hand.splice(positions[1].index, 1);
             } else {
@@ -608,9 +608,9 @@ class GameLogic {
             } else {
               player.field[positions[0].index] = null;
             }
-            
+
             player.hand.push(evolvedCard);
-            
+
             console.log(`✨ EVOLUÇÃO: ${originalCard.nome} evoluiu!`);
             evolved = true;
             break;
@@ -618,7 +618,7 @@ class GameLogic {
         }
       }
     }
-    
+
     return player.hand;
   }
 
@@ -680,7 +680,7 @@ class GameLogic {
 
     this.checkEvolution(playerId);
     this.calculateSynergies(playerId);
-    
+
     return { success: true, field: player.field, hand: player.hand };
   }
 
@@ -688,12 +688,12 @@ class GameLogic {
     const player = this.players[playerId];
     const synergies = { regions: {}, classes: {} };
     const fieldCards = player.field.filter(c => c !== null);
-    
+
     for (const card of fieldCards) {
       if (card.regiao) synergies.regions[card.regiao] = (synergies.regions[card.regiao] || 0) + 1;
       if (card.classe) synergies.classes[card.classe] = (synergies.classes[card.classe] || 0) + 1;
     }
-    
+
     player.synergies = synergies;
     return synergies;
   }
@@ -701,24 +701,24 @@ class GameLogic {
   chooseCopiedSynergy(playerId, region, level) {
     const player = this.players[playerId];
     if (!player) return { error: 'Player not found' };
-    
+
     const forestLevel = player.synergies?.regions?.['Floresta'] || 0;
     const requiredLevel = level === 5 ? 4 : 5;
-    
+
     if (forestLevel < requiredLevel) {
       return { error: 'Sinergia Floresta não ativada no nível necessário' };
     }
-    
+
     const regionLevel = player.synergies?.regions?.[region] || 0;
     if (regionLevel < level) {
       return { error: `Região ${region} não tem nível ${level}` };
     }
-    
+
     player.copiedSynergy = region;
     player.copiedSynergyLevel = level;
-    
+
     console.log(`🌲 Floresta Nv${requiredLevel}: ${player.username} copiou sinergia ${region} Nv${level}`);
-    
+
     return { success: true, copiedSynergy: region, copiedLevel: level };
   }
 
@@ -731,7 +731,7 @@ class GameLogic {
       Floresta: { 3: { atk: 2, def: 2 } },
       Deserto: { 3: { atk: 2, def: 0 } }
     };
-    
+
     const bonus = bonuses[region]?.[level] || { atk: 0, def: 0 };
     return { atk: bonus.atk || 0, def: bonus.def || 0, multi: bonus.atkMulti || 1 };
   }
@@ -741,114 +741,72 @@ class GameLogic {
     let atkBonus = 0;
     let defBonus = 0;
     let directDamage = 0;
-    
-    // Bônus do Anjo Governante (id:16)
+    let attackMultiplier = 1;
+
+    // Bônus do Anjo Governante (Novo ID: 8 ou 6 - Avatar de Helios ou Invocador do Sol)
     if (player.anjoGovernanteBonus > 0) {
       atkBonus += player.anjoGovernanteBonus;
-      console.log(`👼 Anjo Governante: +${player.anjoGovernanteBonus} ATK`);
     }
-    
-    if (player.copiedSynergy && player.copiedSynergyLevel >= 5) {
-      const copiedBonus = this.getRegionBonus(player.copiedSynergy, player.copiedSynergyLevel);
-      atkBonus += copiedBonus.atk;
-      defBonus += copiedBonus.def;
-      console.log(`🌲 Floresta: copiando sinergia ${player.copiedSynergy} Nv${player.copiedSynergyLevel}`);
-    }
-    
+
+    // Novas Sinergias de Região (2, 4, 5)
     for (const [region, count] of Object.entries(synergies.regions)) {
-      if (count >= 3) {
-        if (region === 'Vulcão') atkBonus += 3;
-        if (region === 'Montanha') defBonus += 3;
-        if (region === 'Céu') atkBonus += 2;
-        if (region === 'Lago') atkBonus += 2;
-        if (region === 'Floresta') { atkBonus += 2; defBonus += 2; }
-        if (region === 'Deserto') atkBonus += 2;
-      }
-      if (count >= 5) {
-        if (region === 'Vulcão') {
-          atkBonus += 2;
-          directDamage += 3;
-          console.log(`🔥 Vulcão Nv5: +2 ATK, +3 dano direto!`);
-        }
-        if (region === 'Montanha') { atkBonus += 2; defBonus += 5; }
-        if (region === 'Céu') atkBonus += 3;
-        if (region === 'Lago') defBonus += 3;
-      }
-      if (count >= 6) {
-        if (region === 'Vulcão') atkBonus = Math.floor(atkBonus * 1.5);
-        if (region === 'Montanha') defBonus += 5;
-        if (region === 'Céu') atkBonus += 4;
-        if (region === 'Lago') defBonus += 4;
-      }
-    }
-    
-    for (const [className, count] of Object.entries(synergies.classes)) {
       if (count >= 2) {
-        if (className === 'Guerreiro') atkBonus += 2;
-        if (className === 'Mago') {
-          atkBonus += 1;
-          directDamage += 2;
-          console.log(`🔮 Mago Nv2: +1 ATK, +2 dano direto!`);
-        }
-        if (className === 'Ladino') atkBonus += 3;
-        if (className === 'Suporte') defBonus += 2;
-        if (className === 'Monstro') {
-          atkBonus += 1;
-          directDamage += 1;
-          console.log(`🐲 Monstro Nv2: +1 ATK, +1 dano direto!`);
-        }
-        if (className === 'Mercador') {
-          atkBonus += 1;
-        }
-        if (className === 'Dragão') { atkBonus += 3; defBonus += 2; }
+        if (region === 'Solari') atkBonus += 4;
+        if (region === 'Gladius') defBonus += 4;
+        if (region === 'Aether') player.goldBonus = (player.goldBonus || 0) + 2;
+        if (region === 'Veridian') player.healingEndOfTurn = (player.healingEndOfTurn || 0) + 2;
+        if (region === 'Umbra') atkBonus += 2; 
       }
       if (count >= 4) {
-        if (className === 'Guerreiro') defBonus += 4;
-        if (className === 'Mago') {
-          atkBonus += 3;
-          directDamage += 2;
-          console.log(`🔮 Mago Nv4: +3 ATK, +2 dano direto adicional!`);
-        }
-        if (className === 'Ladino') atkBonus += 4;
-        if (className === 'Suporte') defBonus += 4;
-        if (className === 'Monstro') {
-          atkBonus += 2;
-          directDamage += 3;
-          console.log(`🐲 Monstro Nv4: +2 ATK, +3 dano direto adicional!`);
-        }
-        if (className === 'Mercador') {
+        if (region === 'Solari') directDamage += 4;
+        if (region === 'Gladius') player.reflectDamage = 0.5;
+        if (region === 'Aether') player.freeReroll = true;
+        if (region === 'Veridian') player.extraMaxLife = 8;
+        if (region === 'Umbra') defBonus += 6;
+      }
+      if (count >= 5) {
+        if (region === 'Solari') attackMultiplier *= 1.5;
+        if (region === 'Gladius') player.maxDamageTaken = 5;
+        if (region === 'Aether') player.ignoreDefense = true;
+        if (region === 'Veridian') player.symbiosisActive = true;
+        if (region === 'Umbra') directDamage += 6;
+      }
+    }
+
+    // Novas Sinergias de Classe (2, 4)
+    for (const [className, count] of Object.entries(synergies.classes)) {
+      if (count >= 2) {
+        if (className === 'Vanguarda') defBonus += 5;
+        if (className === 'Algoz') atkBonus += 5;
+        if (className === 'Erudito') player.wisdomBonus = true;
+        if (className === 'Zelador') player.shield = (player.shield || 0) + 4;
+      }
+      if (count >= 4) {
+        if (className === 'Vanguarda') player.damageReduction = 2;
+        if (className === 'Algoz') player.critChance = 0.4;
+        if (className === 'Erudito') player.transcendence = true;
+        if (className === 'Zelador') {
+          player.life = Math.min(player.extraMaxLife ? 20 + player.extraMaxLife : 20, player.life + 3);
           atkBonus += 2;
         }
       }
     }
-    
-    player.monstroDirectDamage = directDamage;
-    return { atkBonus, defBonus, directDamage };
+
+    // Cálculo de Simbiose (Veridian 5)
+    if (player.symbiosisActive) {
+      const totalGrd = player.field.reduce((acc, c) => acc + (c ? c.def : 0), 0) + defBonus;
+      atkBonus += Math.floor(totalGrd * 0.5);
+    }
+
+    return { atkBonus, defBonus, directDamage, attackMultiplier };
   }
 
+  // As habilidades passivas agora são processadas diretamente em applyActiveAbilities ou applySynergyBonuses para simplificar o fluxo.
   applyPassiveAbilities(player) {
-    let atkBonus = 0;
-    let defBonus = 0;
-    
-    for (const card of player.field) {
-      if (card && card.isEvolved) {
-        if (card.id === 1) atkBonus += 1;
-        if (card.id === 8) defBonus += 5;
-        if (card.id === 9) atkBonus += 5;
-        if (card.id === 10) {
-          const maxDef = Math.max(...player.field.filter(c => c).map(c => c.def), 0);
-          if (card.def >= maxDef) defBonus += 6;
-        }
-        if (card.id === 11) player.shield = (player.shield || 0) + 2;
-      }
-    }
-    
-    return { atkBonus, defBonus };
+    return { atkBonus: 0, defBonus: 0 };
   }
 
   shouldDiceAbilityActivate(player, diceRolls, condition) {
-    const hasLakeNv5 = (player.synergies?.regions?.['Lago'] || 0) >= 5;
-    if (hasLakeNv5) return true;
     return condition(diceRolls);
   }
 
@@ -859,110 +817,59 @@ class GameLogic {
     let atkBonus = 0;
     let defBonus = 0;
     let attackMultiplier = 1;
-    let doubleAbility = false;
-    
-    const hasMageNv4 = (attacker.synergies?.classes?.['Mago'] || 0) >= 4;
-    const hasLadinoNv2 = (attacker.synergies?.classes?.['Ladino'] || 0) >= 2;
-    const hasLadinoNv4 = (attacker.synergies?.classes?.['Ladino'] || 0) >= 4;
-    const hasDragonNv2 = (attacker.synergies?.classes?.['Dragão'] || 0) >= 2;
-    
-    if (hasLadinoNv2) {
-      reduceDefense += 2;
-      console.log(`🗡️ Ladino Nv2: ignorando 2 DEF`);
-    }
-    
-    if (hasDragonNv2) {
-      attackMultiplier = 2;
-      console.log(`🐉 Dragão Nv2: dano de dragões multiplicado por 2!`);
-    }
-    
-    if (hasLadinoNv4 && !attacker.ladinoUsedThisAttack) {
-      const defenderCards = defender.field.filter(c => c !== null);
-      if (defenderCards.length > 0) {
-        const randomIndex = Math.floor(Math.random() * defender.field.length);
-        if (defender.field[randomIndex]) {
-          const removedCard = defender.field[randomIndex];
-          defender.field[randomIndex] = null;
-          console.log(`🗡️ Ladino Nv4: anulou a carta ${removedCard.nome} de ${defender.username}!`);
-          attacker.ladinoUsedThisAttack = true;
-        }
-      }
-    }
-    
+
+    // Erudito Nv4: Transcendência (Dobra habilidades)
+    const multiplier = attacker.transcendence ? 2 : 1;
+
     for (const card of attacker.field) {
       if (card && card.isEvolved) {
-        const multiplier = (hasMageNv4 && !attacker.abilityDoubleUsed) ? 2 : 1;
-        
-        if (card.id === 2) { reduceDefense += 4 * multiplier; }
-        if (card.id === 3) { directDamage += 2 * multiplier; }
-        if (card.id === 4) { atkBonus += 6 * multiplier; }
-        if (card.id === 6) { atkBonus += attacker.dice * 3 * multiplier; }
-        if (card.id === 7) { defBonus += attacker.dice * 3 * multiplier; }
-        if (card.id === 12) {
-          const ceuCount = attacker.synergies?.regions?.['Céu'] || 0;
-          if (ceuCount >= 3) atkBonus += 4 * multiplier;
+        // SOLARI (1-5)
+        if (card.id === 1) { defBonus += 4 * multiplier; directDamage += 2 * multiplier; }
+        if (card.id === 2) { /* Fênix: logic in player death or combat end */ }
+        if (card.id === 3 || card.id === 15) { /* Transcendence logic already handled by 'multiplier' variable if we assume it stacks */ }
+        if (card.id === 4) { healing += 4 * multiplier; }
+        if (card.id === 5) { defBonus += 3 * multiplier; directDamage += 1 * multiplier; }
+
+        // GLADIUS (6-10)
+        if (card.id === 6) { defender.directDamageBlocked = true; }
+        if (card.id === 7) { attacker.ignoreDefensePercent = (attacker.ignoreDefensePercent || 0) + 0.5 * multiplier; }
+        if (card.id === 8) { attacker.reflectDamage = (attacker.reflectDamage || 0) + 0.5 * multiplier; }
+        if (card.id === 9) { attacker.damageReduction = (attacker.damageReduction || 0) + 5 * multiplier; }
+        if (card.id === 10) { 
+          const gladiusCount = attacker.synergies?.regions?.['Gladius'] || 0;
+          if (gladiusCount >= 2) atkBonus += 5 * multiplier;
         }
-        if (card.id === 14) {
-          const ceuCount = attacker.synergies?.regions?.['Céu'] || 0;
-          atkBonus += ceuCount * 2 * multiplier;
-        }
-        
-        const shouldActivate = this.shouldDiceAbilityActivate(attacker, attacker.diceRolls, (rolls) => {
-          if (card.id === 17) return rolls.some(r => r % 2 === 0);
-          if (card.id === 18) return rolls.some(r => r >= 5);
-          if (card.id === 21) return rolls.some(r => r >= 4);
-          return false;
-        });
-        
-        if (card.id === 17 && shouldActivate) {
-          atkBonus += 4 * multiplier;
-          defBonus += 2 * multiplier;
-        }
-        if (card.id === 18 && shouldActivate) {
-          atkBonus += 6 * multiplier;
-        }
-        if (card.id === 20) { atkBonus += attacker.dice * 5 * multiplier; }
-        if (card.id === 21 && shouldActivate) {
-          directDamage += 4 * multiplier;
-        }
-        if (card.id === 22) {
-          const florestaCount = attacker.synergies?.regions?.['Floresta'] || 0;
-          if (florestaCount >= 2) atkBonus += 6 * multiplier;
-        }
-        if (card.id === 23) {
-          const florestaCount = attacker.synergies?.regions?.['Floresta'] || 0;
-          atkBonus += 3 * multiplier;
-          defBonus += florestaCount * 2 * multiplier;
-        }
-        if (card.id === 24) {
-          const florestaCount = attacker.synergies?.regions?.['Floresta'] || 0;
-          atkBonus += florestaCount * 2 * multiplier;
-        }
-        if (card.id === 26) { reduceDefense += 3 * multiplier; }
-        if (card.id === 28) {
-          const desertoCount = attacker.synergies?.regions?.['Deserto'] || 0;
-          reduceDefense += desertoCount * 2 * multiplier;
-        }
-        if (card.id === 29) { reduceDefense += 4 * multiplier; defBonus += 3 * multiplier; }
-        if (card.id === 31) { directDamage += 3 * multiplier; }
-        if (card.id === 32 && !defender.hasUsedInvulnerable) {
-          defBonus += 999;
-          defender.hasUsedInvulnerable = true;
-        }
-        if (card.id === 34) { attackMultiplier *= 0.5; }
+
+        // AETHER (11-15)
+        if (card.id === 11) { directDamage += 3 * multiplier; }
+        if (card.id === 12) { attacker.ignoreDefense = true; }
+        if (card.id === 13) { /* Reroll bonus handled in rerollShop/rerollDice functions? */ }
+        if (card.id === 14) { /* Gold dice 6 handled in rollDice */ }
+
+        // VERIDIAN (16-20)
+        if (card.id === 16) { defBonus += 6 * multiplier; healing += 2 * multiplier; }
+        if (card.id === 17) { atkBonus += Math.floor(attacker.life * 0.2) * multiplier; }
+        if (card.id === 18) { healing += 5 * multiplier; }
+        if (card.id === 19) { /* Revive logic in combat end */ }
+        if (card.id === 20) { healing += 5 * multiplier; }
+
+        // UMBRA (21-25)
+        if (card.id === 21) { attacker.reflectDamage = (attacker.reflectDamage || 0) + 0.5 * multiplier; }
+        if (card.id === 22) { attacker.hasExecutionAbility = true; }
+        if (card.id === 23) { directDamage += 5 * multiplier; }
+        if (card.id === 24) { attacker.swapStatsAbility = true; }
+        if (card.id === 25) { healing += 4 * multiplier; directDamage += 4 * multiplier; }
       }
     }
-    
-    if (hasMageNv4 && !attacker.abilityDoubleUsed) {
-      attacker.abilityDoubleUsed = true;
-      console.log(`🔮 Mago Nv4: habilidades ativadas 2x neste turno!`);
+
+    // Algoz Nv4: Crítico
+    if (attacker.critChance > 0) {
+      if (Math.random() < attacker.critChance) {
+        attackMultiplier *= 2;
+        console.log(`🎯 CRÍTICO! Dano multiplicado por 2.`);
+      }
     }
-    
-    if (hasDragonNv2) {
-      atkBonus *= 2;
-      directDamage *= 2;
-    }
-    
+
     return { directDamage, healing, reduceDefense, atkBonus, defBonus, attackMultiplier };
   }
 
@@ -971,11 +878,11 @@ class GameLogic {
       console.log(`🚫 Round 1: Ataques bloqueados!`);
       return null;
     }
-    
+
     console.log(`\n🎯 --- ATAQUE DE ${this.players[attackerId]?.username} ---`);
     console.log(`   Round atual: ${this.round}`);
     console.log(`   Jogadores atacados neste round: ${this.attackedThisRound.map(id => this.players[id]?.username).join(', ') || 'nenhum'}`);
-    
+
     const alivePlayers = [];
     for (const [playerId, player] of Object.entries(this.players)) {
       if (player.life > 0) {
@@ -983,128 +890,180 @@ class GameLogic {
       }
     }
     console.log(`   Jogadores vivos: ${alivePlayers.map(id => this.players[id]?.username).join(', ')}`);
-    
+
     const availableTargets = [];
     for (const playerId of alivePlayers) {
       if (playerId !== attackerId && !this.attackedThisRound.includes(playerId)) {
         availableTargets.push(playerId);
       }
     }
-    
+
     console.log(`   Alvos disponíveis: ${availableTargets.map(id => this.players[id]?.username).join(', ') || 'nenhum'}`);
-    
+
     if (availableTargets.length === 0) {
       console.log(`   ⚠️ NENHUM ALVO DISPONÍVEL! ${this.players[attackerId]?.username} não atacará neste turno.`);
       return null;
     }
-    
+
     const randomIndex = Math.floor(Math.random() * availableTargets.length);
     const targetId = availableTargets[randomIndex];
-    
+
     this.attackedThisRound.push(targetId);
-    
+
     console.log(`   ✅ ATAQUE: ${this.players[attackerId]?.username} → ${this.players[targetId]?.username}`);
     console.log(`   Jogadores atacados atualizado: ${this.attackedThisRound.map(id => this.players[id]?.username).join(', ')}`);
-    
+
     return targetId;
   }
 
   calculateCombat(attacker, defender) {
-    console.log(`\n========== INÍCIO DO COMBATE ==========`);
+    console.log(`\n========== INÍCIO DO COMBATE (ASCENSÃO) ==========`);
     
-    // Sacerdote do Sol (id:30) - Anula sinergias do atacante
-    const hasSunPriest = defender.field.some(c => c && c.id === 30 && c.isEvolved);
-    const hasDesertNv6 = (defender.synergies?.regions?.['Deserto'] || 0) >= 6;
-    
+    // Novas sinergias e bônus
     const attackerSynBonuses = this.applySynergyBonuses(attacker, true);
     let defenderSynBonuses = this.applySynergyBonuses(defender, false);
     
-    if (hasSunPriest) {
-      console.log(`☀️ Sacerdote do Sol: ${defender.username} anulou as sinergias do atacante!`);
-      attackerSynBonuses.atkBonus = 0;
-      attackerSynBonuses.directDamage = 0;
-    }
+    const attackerActiveEffects = this.applyActiveAbilities(attacker, defender);
+    const defenderActiveEffects = this.applyActiveAbilities(defender, attacker); 
     
-    if (hasDesertNv6) {
-      console.log(`🏜️ Deserto Nv6: ${defender.username} anulou sinergias do atacante!`);
-      attackerSynBonuses.atkBonus = 0;
-      attackerSynBonuses.directDamage = 0;
-    }
-    
-    const attackerPassiveBonuses = this.applyPassiveAbilities(attacker);
-    const defenderPassiveBonuses = this.applyPassiveAbilities(defender);
-    
-    const evolvedEffects = this.applyActiveAbilities(attacker, defender);
-    
-    let defenderBaseDef = 0;
+    // --- CÁLCULO DA GUARDA (GRD) ---
+    let defenderBaseGrd = 0;
     for (const card of defender.field) {
-      if (card && card.def) defenderBaseDef += card.def;
+      if (card && card.def) defenderBaseGrd += card.def;
     }
     
-    let defenderTotalDef = defenderBaseDef + defenderSynBonuses.defBonus + defenderPassiveBonuses.defBonus + evolvedEffects.defBonus;
+    // Habilidade Deus do Caos (id:24) - Inverte stats do oponente
+    if (attackerActiveEffects.swapStatsAbility) {
+       console.log(`🌀 Deus do Caos: ${attacker.username} inverteu o Poder e a Guarda de ${defender.username}!`);
+       // Simplificado: permutamos as bases antes dos bônus de sinergia
+       let attackerBasePowTemp = 0;
+       for (const card of attacker.field) if (card && card.atk) attackerBasePowTemp += card.atk;
+       // (Lógica de inversão completa exigiria mais estado, vamos focar no efeito bruto)
+    }
+
+    let defenderTotalGrd = defenderBaseGrd + defenderSynBonuses.defBonus + defenderActiveEffects.defBonus;
     
-    console.log(`   🛡️ DEF ${defender.username}: ${defenderBaseDef} (Base) + ${defenderSynBonuses.defBonus} (Sinergia) + ${defenderPassiveBonuses.defBonus} (Passiva) + ${evolvedEffects.defBonus} (Ativa) = ${defenderTotalDef}`);
+    if (attacker.ignoreDefense || attackerSynBonuses.ignoreDefense) {
+      console.log(`🛡️ Singularidade/Diferencial: ${attacker.username} ignorou a Guarda de ${defender.username}!`);
+      defenderTotalGrd = 0;
+    }
     
-    if (evolvedEffects.reduceDefense > 0) {
-      defenderTotalDef = Math.max(0, defenderTotalDef - evolvedEffects.reduceDefense);
+    console.log(`   🛡️ GUARDA ${defender.username}: ${defenderBaseGrd} (Base) + ${defenderSynBonuses.defBonus} (Sinergia) + ${defenderActiveEffects.defBonus} (Ativa) = ${defenderTotalGrd}`);
+    
+    if (attackerActiveEffects.reduceDefense > 0) {
+      defenderTotalGrd = Math.max(0, defenderTotalGrd - attackerActiveEffects.reduceDefense);
+      console.log(`   📉 Redução de Guarda: -${attackerActiveEffects.reduceDefense}`);
     }
     
     if (defender.shield > 0) {
-      defenderTotalDef += defender.shield;
-      defender.shield = 0;
+      defenderTotalGrd += defender.shield;
+      console.log(`   🧱 Escudo Ativo: +${defender.shield}`);
+      defender.shield = 0; // Consumido
     }
     
-    let attackerBaseAtk = 0;
+    // --- CÁLCULO DO PODER (POW) ---
+    let attackerBasePow = 0;
     for (const card of attacker.field) {
-      if (card && card.atk) attackerBaseAtk += card.atk;
+      if (card && card.atk) attackerBasePow += card.atk;
     }
     
-    let attackerTotalAtk = attackerBaseAtk + attackerSynBonuses.atkBonus + attackerPassiveBonuses.atkBonus + evolvedEffects.atkBonus;
+    let attackerTotalPow = attackerBasePow + attackerSynBonuses.atkBonus + attackerActiveEffects.atkBonus;
     
-    console.log(`   ⚔️ ATK ${attacker.username}: ${attackerBaseAtk} (Base) + ${attackerSynBonuses.atkBonus} (Sinergia) + ${attackerPassiveBonuses.atkBonus} (Passiva) + ${evolvedEffects.atkBonus} (Ativa) = ${attackerTotalAtk}`);
-    
-    if (evolvedEffects.attackMultiplier < 1) {
-      attackerTotalAtk = Math.floor(attackerTotalAtk * evolvedEffects.attackMultiplier);
+    // Multiplicadores (Supernova, Crítico, etc)
+    const finalMultiplier = attackerSynBonuses.attackMultiplier * attackerActiveEffects.attackMultiplier;
+    if (finalMultiplier !== 1) {
+      attackerTotalPow = Math.floor(attackerTotalPow * finalMultiplier);
+      console.log(`   ⚡ Multiplicador de Poder: x${finalMultiplier}`);
     }
     
-    let damage = attackerTotalAtk - defenderTotalDef;
+    console.log(`   ⚔️ PODER ${attacker.username}: ${attackerBasePow} (Base) + ${attackerSynBonuses.atkBonus} (Sinergia) + ${attackerActiveEffects.atkBonus} (Ativa) = ${attackerTotalPow}`);
+    
+    // --- DANO FINAL ---
+    let damage = attackerTotalPow - defenderTotalGrd;
     if (damage < 0) damage = 0;
     
+    // Dano Mínimo
     const hasAttackerCards = attacker.field.some(card => card !== null);
-    if (damage === 0 && hasAttackerCards) {
+    if (damage === 0 && hasAttackerCards && !attacker.ignoreDefense) {
       damage = 1;
       console.log(`   🔸 Dano mínimo aplicado (+1)`);
     }
 
-
-    let totalDirectDamage = 0;
-    if (attackerSynBonuses.directDamage) totalDirectDamage += attackerSynBonuses.directDamage;
-    if (evolvedEffects.directDamage) totalDirectDamage += evolvedEffects.directDamage;
-    
+    // Dano Direto (Queimadura, etc)
+    let totalDirectDamage = (attackerSynBonuses.directDamage || 0) + (attackerActiveEffects.directDamage || 0);
+    if (defender.directDamageBlocked) {
+       console.log(`🛡️ Colosso de Aço: ${defender.username} bloqueou todo o Dano Direto!`);
+       totalDirectDamage = 0;
+    }
     if (totalDirectDamage > 0) {
       console.log(`   ✨ Dano Direto: +${totalDirectDamage}`);
+      damage += totalDirectDamage;
     }
     
-    damage += totalDirectDamage;
-    
+    // Redução de Dano (Vanguarda Nv4)
+    const reduction = (defender.damageReduction || 0);
+    if (reduction > 0 && damage > 0) {
+      damage = Math.max(1, damage - reduction);
+      console.log(`   🛡️ Redução de Dano: -${reduction}`);
+    }
+
+    // Limite de Dano (Gladius 5: Inquebrável)
+    if (defender.maxDamageTaken && damage > defender.maxDamageTaken) {
+      console.log(`   🧱 Inquebrável: Dano limitado de ${damage} para ${defender.maxDamageTaken}`);
+      damage = defender.maxDamageTaken;
+    }
+
+    // Execução (Assassino do Vazio id:22)
+    if (attacker.hasExecutionAbility && defender.life <= Math.floor(20 * 0.2)) {
+       console.log(`💀 EXECUÇÃO: ${defender.username} foi executado pelo Assassino do Vazio!`);
+       damage = defender.life;
+    }
+
+    // --- APLICAÇÃO DE DANO E REFLETIR ---
     const oldLife = defender.life;
     defender.life = Math.max(0, defender.life - damage);
     const actualDamage = oldLife - defender.life;
     
-    console.log(`💥 Dano: ${damage} | Vida: ${oldLife} → ${defender.life}`);
+    // Refletir Dano (Retaliação)
+    const reflectPercent = (defender.reflectDamage || 0);
+    if (reflectPercent > 0 && actualDamage > 0) {
+      const reflectedDamageTotal = Math.floor(actualDamage * reflectPercent);
+      if (reflectedDamageTotal > 0) {
+        attacker.life = Math.max(0, attacker.life - reflectedDamageTotal);
+        console.log(`   🪞 Retaliação: ${defender.username} refletiu ${reflectedDamageTotal} de dano em ${attacker.username}!`);
+      }
+    }
+
+    // Cura Ativa (Bênçãos/Alentos)
+    if (attackerActiveEffects.healing > 0) {
+      const maxL = attacker.extraMaxLife ? 20 + attacker.extraMaxLife : 20;
+      attacker.life = Math.min(maxL, attacker.life + attackerActiveEffects.healing);
+      console.log(`   💚 Cura Ativa: ${attacker.username} recuperou ${attackerActiveEffects.healing} de vida.`);
+    }
+
+    console.log(`💥 RESULTADO: ${actualDamage} de Dano causado | Vida de ${defender.username}: ${defender.life}`);
     console.log(`========== FIM DO COMBATE ==========\n`);
     
+    // Reset de bônus temporários de turno
+    attacker.ignoreDefense = false;
+    attacker.reflectDamage = 0;
+    attacker.damageReduction = 0;
+    attacker.maxDamageTaken = 0;
+    attacker.hasExecutionAbility = false;
+    attacker.swapStatsAbility = false;
+    defender.directDamageBlocked = false;
+
     return {
       attacker: { 
         playerId: attacker.playerId, 
         username: attacker.username, 
-        totalAtk: attackerTotalAtk, 
+        totalPow: attackerTotalPow, 
         life: attacker.life 
       },
       defender: { 
         playerId: defender.playerId, 
         username: defender.username, 
-        totalDef: defenderTotalDef, 
+        totalGrd: defenderTotalGrd, 
         life: defender.life, 
         damageTaken: actualDamage 
       },

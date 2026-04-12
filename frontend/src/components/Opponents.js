@@ -140,7 +140,7 @@ export default function Opponents({ opponents, currentUsername, gameId }) {
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: '24px', color: '#ff4d4d' }}>❤️</div>
                 <div style={{ fontWeight: 'bold' }}>{selectedOpponent.life}</div>
-                <div style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase' }}>Vida</div>
+                <div style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase' }}>Energia Vital</div>
               </div>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: '24px', color: '#fff' }}>🃏</div>
@@ -206,11 +206,11 @@ export default function Opponents({ opponents, currentUsername, gameId }) {
                         {card.nome?.slice(0, 15)}
                       </div>
                       <div style={{ fontSize: '11px', marginTop: '5px', color: '#fff' }}>
-                        ⚔️ {card.atk} 🛡️ {card.def}
+                        P <span style={{color: '#ff4d4d'}}>{card.atk}</span> G <span style={{color: '#fff'}}>{card.def}</span>
                       </div>
                       {card.isEvolved && (
-                        <div style={{ fontSize: '10px', color: '#ffcc00', marginTop: '3px', fontWeight: 'bold' }}>
-                          ✨ ELITE
+                        <div style={{ fontSize: '10px', color: 'var(--accent-color)', marginTop: '3px', fontWeight: 'bold' }}>
+                          ✨ ASCENDIDO
                         </div>
                       )}
                     </>

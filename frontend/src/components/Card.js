@@ -1,127 +1,115 @@
 import React, { useState } from 'react';
 
-export default function Card({ card, onClick, onSell, isShop = false }) {
-  const [showTooltip, setShowTooltip] = useState(false);
+export default function Card({ card, onClick, onSell, isShop = false, isSynergyMatch = false }) {
   const [isZoomed, setIsZoomed] = useState(false);
 
-  if (!card) return <div className="card-placeholder" style={{ 
-    width: '120px', height: '170px', border: '2px dashed #444', 
-    borderRadius: '10px', display: 'flex', alignItems: 'center', 
-    justifyContent: 'center', color: '#444' 
-  }}>Vazio</div>;
+  if (!card) return (
+    <div className="card-placeholder" style={{ 
+      width: '130px', height: '190px', border: '2px dashed #444', 
+      borderRadius: '10px', display: 'flex', alignItems: 'center', 
+      justifyContent: 'center', color: '#444', fontSize: '10px' 
+    }}>Vazio</div>
+  );
 
-  const handleSell = (e) => {
-    e.stopPropagation(); // Impede o clique na carta
-    if (onSell) onSell(card);
+  // Mapeamento de Material por Custo
+  const getMaterialClass = (cost) => {
+    if (cost >= 8) return 'frame-diamond';
+    if (cost >= 5) return 'frame-gold';
+    if (cost >= 3) return 'frame-silver';
+    return 'frame-bronze';
   };
 
+  // Mapeamento de Aura por Região
+  const getAuraClass = (region) => {
+    if (!region) return '';
+    return `aura-${region.toLowerCase()}`;
+  };
+
+  const materialClass = getMaterialClass(card.custo);
+  const auraClass = getAuraClass(card.regiao);
+  const isAscendido = card.isEvolved;
+
   return (
-    <>
-      {/* Carta normal */}
-      <div 
-        className={`dominion-card ${card.regiao.toLowerCase()}`}
-        onClick={() => onClick && onClick(card)}
-        onMouseEnter={() => {
-          setIsZoomed(true);
-          setShowTooltip(true);
-        }}
-        onMouseLeave={() => {
-          setIsZoomed(false);
-          setShowTooltip(false);
-        }}
-        style={{
-          position: 'relative',
-          cursor: 'pointer',
-          width: '130px',
-          height: '190px',
-          borderRadius: '8px',
-          overflow: 'visible',
-          transition: 'transform 0.2s ease-in-out, z-index 0.2s',
-          zIndex: isZoomed ? 1000 : 1,
-          transform: isZoomed ? 'scale(1.8)' : 'scale(1)',
-          boxShadow: isZoomed ? '0 10px 40px rgba(0,0,0,0.8)' : 'none'
-        }}
-      >
-        <img 
-          src={`/Uploads/${card.imagem}`} 
-          alt={card.nome} 
-          style={{ 
-            width: '100%', 
-            height: '100%', 
-            objectFit: 'contain', 
-            borderRadius: '8px',
-            boxShadow: '0 4px 8px rgba(0,0,0,0.5)',
-            border: card.isEvolved ? '2px solid #ff4d4d' : '1px solid #333'
-          }} 
-          onError={(e) => {
-            e.target.src = `https://via.placeholder.com/130x190/000000/e94560?text=${card.nome?.slice(0, 10)}`;
-          }}
-        />
-
-        {/* Botão de Venda removido a pedido do usuário para não tampar os stats */}
-
-
-        {/* Tooltip com informações da carta */}
-        {showTooltip && (
-          <div className="card-evolution-tooltip" style={{
-            position: 'absolute',
-            bottom: '105%',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: '240px',
-            background: 'rgba(10, 10, 10, 0.95)',
-            color: 'white',
-            padding: '12px',
-            borderRadius: '8px',
-            fontSize: '13px',
-            border: '2px solid #e94560',
-            boxShadow: '0 10px 30px rgba(0,0,0,1)',
-            pointerEvents: 'none',
-            zIndex: 1001,
-            backdropFilter: 'blur(10px)'
-          }}>
-            <div style={{ color: '#e94560', fontWeight: 'bold', borderBottom: '1px solid #333', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>
-              ⚔️ {card.nome}
+    <div 
+      className={`dominion-card ${materialClass} ${auraClass} ${isSynergyMatch ? 'synergy-match' : ''}`}
+      onClick={() => onClick && onClick(card)}
+      onMouseEnter={() => setIsZoomed(true)}
+      onMouseLeave={() => setIsZoomed(false)}
+      style={{
+        zIndex: isZoomed ? 1000 : 1,
+        transform: isZoomed ? 'scale(1.8)' : 'scale(1)',
+        cursor: 'pointer'
+      }}
+    >
+      <div className="card-inner-layout">
+        {/* TOPO: Nome, Custo, Região */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', height: '28px' }}>
+          <div className="card-title" style={{ marginTop: '2px' }}>
+            {card.nome}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', top: '-4px' }}>
+            <div style={{ 
+              background: 'radial-gradient(circle, #ffd700 0%, #b8860b 100%)',
+              width: '20px', height: '20px', borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              border: '1px solid #000', boxShadow: '0 2px 4px rgba(0,0,0,0.5)',
+              color: '#000', fontWeight: '900', fontSize: '11px'
+            }}>
+              {card.custo}
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <span>⚔️ <span style={{color: '#ff4d4d'}}>{card.atk}</span></span>
-              <span>🛡️ <span style={{color: '#fff'}}>{card.def}</span></span>
-              <span>💰 <span style={{color: '#ffcc00'}}>{card.custo}</span></span>
-            </div>
-            <div style={{ fontSize: '11px', color: '#aaa', borderTop: '1px solid #333', paddingTop: '8px' }}>
-              <span style={{color: '#e94560'}}>Habilidade:</span> {card.evolucao || 'Nenhuma habilidade passiva'}
-            </div>
-            {card.purchasePrice !== undefined && (
-              <div style={{ marginTop: '5px', fontSize: '10px', color: '#ffcc00' }}>
-                Reembolso de venda: {card.purchasePrice} ouro
-              </div>
-            )}
-            <div style={{ marginTop: '5px', fontSize: '10px', color: '#666' }}>
-              {card.regiao} • {card.classe}
+            <div style={{ fontSize: '7px', opacity: 0.8, color: '#fff', textTransform: 'uppercase', marginTop: '1px' }}>
+              {card.regiao}
             </div>
           </div>
-        )}
+        </div>
 
-        <div style={{
-          position: 'absolute',
-          top: '-5px',
-          right: '-5px',
-          background: '#ffcc00',
-          color: '#000',
-          borderRadius: '50%',
-          width: '24px',
-          height: '24px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontWeight: 'bold',
-          fontSize: '12px',
-          border: '1px solid #000',
-          boxShadow: '0 0 10px rgba(255, 204, 0, 0.3)'
-        }}>
-          {card.custo}
+        {/* MEIO: Arte */}
+        <div className="card-art-frame">
+          <img 
+            src={card.imagem.startsWith('http') ? card.imagem : `/assets/cards/${card.imagem}`} 
+            alt={card.nome} 
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+            onError={(e) => {
+              e.target.src = `https://via.placeholder.com/130x100/1a1a1a/fff?text=${card.nome?.slice(0, 8)}`;
+            }}
+          />
+          {isAscendido && (
+            <div style={{
+              position: 'absolute', top: '2px', left: '2px',
+              background: 'rgba(185, 242, 255, 0.9)', color: '#000',
+              fontSize: '7px', padding: '1px 4px', borderRadius: '3px',
+              fontWeight: '900', textTransform: 'uppercase', boxShadow: '0 0 5px #000'
+            }}>
+              Ascendido
+            </div>
+          )}
+        </div>
+
+        {/* INFERIOR: Dádiva */}
+        <div className="card-dadiva-box">
+          <div className="card-dadiva-label">Dádiva</div>
+          <div className="card-dadiva-text">
+            {card.evolucao || 'Nenhuma dádiva ativa.'}
+          </div>
+        </div>
+
+        {/* CANTOS: POW e GRD */}
+        <div className="stats-container">
+          <div className="stat-shield pow">
+            <span style={{ fontSize: '7px', color: 'rgba(255,255,255,0.7)', fontWeight: 'bold' }}>POW</span>
+            <span className="stat-value">{card.atk}</span>
+          </div>
+          <div className="stat-shield grd">
+            <span style={{ fontSize: '7px', color: 'rgba(255,255,255,0.7)', fontWeight: 'bold' }}>GRD</span>
+            <span className="stat-value">{card.def}</span>
+          </div>
+        </div>
+
+        {/* RODAPÉ: Classe */}
+        <div className="card-footer-class">
+          {card.classe}
         </div>
       </div>
-    </>
+    </div>
   );
 }

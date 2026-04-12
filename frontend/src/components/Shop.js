@@ -1,7 +1,12 @@
 import React from 'react';
 import Card from './Card';
 
-export default function Shop({ shopCards, onBuy, onReturnCard, gold }) {
+export default function Shop({ shopCards, onBuy, onReturnCard, gold, playerField = [], playerHand = [] }) {
+  const checkSynergyMatch = (shopCard) => {
+    if (!shopCard) return false;
+    const combined = [...playerField, ...playerHand].filter(c => c !== null);
+    return combined.some(c => c.regiao === shopCard.regiao || c.classe === shopCard.classe);
+  };
   const handleDragOver = (e) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
@@ -47,7 +52,15 @@ export default function Shop({ shopCards, onBuy, onReturnCard, gold }) {
         flexWrap: 'wrap',
         gap: '10px'
       }}>
-        <h2 style={{ color: '#e94560', margin: 0, fontSize: 'clamp(18px, 5vw, 24px)', textTransform: 'uppercase', letterSpacing: '2px' }}>🛒 Loja de Cartas</h2>
+        <h2 style={{ 
+          color: '#e94560', 
+          margin: 0, 
+          fontSize: 'clamp(18px, 5vw, 24px)', 
+          textTransform: 'uppercase', 
+          letterSpacing: '2px',
+          fontFamily: "'Cinzel', serif",
+          fontWeight: 'bold'
+        }}>🛒 Loja de Cartas</h2>
         <div style={{ 
           background: '#e94560', 
           color: '#fff', 
@@ -55,7 +68,8 @@ export default function Shop({ shopCards, onBuy, onReturnCard, gold }) {
           borderRadius: '4px', 
           fontWeight: 'bold',
           fontSize: 'clamp(14px, 4vw, 16px)',
-          boxShadow: '0 0 10px rgba(233, 69, 96, 0.4)'
+          boxShadow: '0 0 10px rgba(233, 69, 96, 0.4)',
+          fontFamily: "'Cinzel', serif"
         }}>
           🪙 SEU OURO: {gold !== undefined ? gold : 0}
         </div>
@@ -86,7 +100,12 @@ export default function Shop({ shopCards, onBuy, onReturnCard, gold }) {
               position: 'relative',
               zIndex: 100
             }}>
-              <Card card={card} onClick={() => onBuy && onBuy(card, index)} isShop={true} />
+              <Card 
+                card={card} 
+                onClick={() => onBuy && onBuy(card, index)} 
+                isShop={true} 
+                isSynergyMatch={checkSynergyMatch(card)}
+              />
             </div>
           ))
         )}

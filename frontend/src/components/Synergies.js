@@ -7,7 +7,7 @@ export default function Synergies({ synergies }) {
   if (!synergies || !synergies.regions || !synergies.classes) {
     return (
       <div style={{ marginTop: '10px', background: 'rgba(10, 10, 10, 0.8)', border: '1px solid #333', padding: '15px', borderRadius: '8px' }}>
-        <h4 style={{ color: '#e94560', textTransform: 'uppercase', fontSize: '14px', marginBottom: '10px' }}>🔗 Sinergias Ativas</h4>
+        <h4 style={{ color: 'var(--accent-color)', textTransform: 'uppercase', fontSize: '14px', marginBottom: '10px' }}>🔗 Sinergias Ativas</h4>
         <p style={{ fontSize: '12px', color: '#666' }}>Nenhuma sinergia ativa</p>
         <button 
           onClick={() => setIsCodexOpen(true)}
@@ -34,98 +34,68 @@ export default function Synergies({ synergies }) {
     );
   }
 
-  // Configuração dos bônus (MANTIDO PARA CÁLCULO LOCAL DE ATK/DEF)
   const regionBonuses = {
-    Vulcão: { 
-      3: { atk: 3, desc: 'ATK +3' },
-      5: { atk: 2, desc: 'ATK +2 (Total +5)' },
-      6: { atkMulti: 1.5, desc: 'ATK x1.5' }
-    },
-    Montanha: { 
-      3: { def: 3, desc: 'DEF +3' },
-      5: { atk: 2, def: 5, desc: 'ATK +2 / DEF +5' },
-      6: { def: 5, desc: 'DEF +5 adicional' }
-    },
-    Céu: { 
-      3: { dice: 2, desc: '2 dados fixos' },
-      5: { freeCard: true, desc: '1 carta custo 0' },
-      6: { atkPerDice: 2, desc: '+2 ATK por dado' }
-    },
-    Lago: { 
-      3: { atkEven: 3, desc: 'Dado par: +3 ATK' },
-      5: { chooseBestDice: true, desc: 'Escolhe melhor dado' },
-      6: { minDice: 6, def: 2, desc: 'Mínimo 6 / +2 DEF' }
-    },
-    Floresta: { 
-      3: { atk: 2, def: 2, desc: 'ATK +2 / DEF +2' },
-      4: { copySynergy: true, desc: 'Copia sinergia' },
-      5: { copySynergy: true, desc: 'Copia sinergia' }
-    },
-    Deserto: { 
-      3: { chooseTarget: true, desc: 'Escolhe alvo' },
-      5: { cancelCard: true, desc: 'Anula carta oponente' },
-      6: { noSynergy: true, desc: 'Sem sinergias contra' }
-    }
+    Solari: { 2: { atk: 2, desc: 'POW +2' }, 4: { atk: 4, desc: 'POW +4 Adicional' }, 5: { multi: 1.5, desc: 'POW Total x1.5' } },
+    Gladius: { 2: { def: 2, desc: 'GRD +2' }, 4: { parry: true, desc: 'Aparada: Ignora 2 Dano' }, 5: { reflect: 0.5, desc: 'Retaliação: 50%' } },
+    Aether: { 2: { dice: 1, desc: '+1 Dado' }, 4: { free: true, desc: '1 Carta Grátis' }, 5: { win: true, desc: 'Dados sempre 6' } },
+    Veridian: { 2: { heal: 2, desc: 'Cura 2' }, 4: { symbiosis: true, desc: 'Simbiose Ativa' }, 5: { maxLife: 5, desc: 'Vida Máxima +5' } },
+    Umbra: { 2: { ignoreGrd: 2, desc: 'Ignora 2 GRD' }, 4: { execute: 3, desc: 'Execução (<3 Vida)' }, 5: { divine: true, desc: 'Dano Divino' } }
   };
 
   const classBonuses = {
-    Guerreiro: { 2: { atk: 2, desc: 'ATK +2' }, 4: { def: 4, desc: 'DEF +4' } },
-    Mago: { 2: { directDamage: 2, desc: '2 de dano direto' }, 4: { doubleAbility: true, desc: 'Ativa habilidade 2x' } },
-    Ladino: { 2: { ignoreDef: 2, desc: 'Ignora 2 DEF' }, 4: { cancelCard: true, desc: 'Anula carta aleatória' } },
-    Suporte: { 2: { heal: 2, desc: 'Cura 2 de vida' }, 4: { def: 3, heal: 3, desc: 'DEF +3 / Cura 3' } },
-    Monstro: { 2: { atk: 1, desc: 'ATK +1' }, 4: { atk: 2, desc: 'ATK +2' } },
-    Mercador: { 2: { costReduce: 1, desc: 'Custo -1' }, 4: { costReduce: 3, desc: 'Custo -3' } },
-    Dragão: { 2: { doubleDamage: true, desc: 'Dano x2' } }
+    Vanguarda: { 2: { def: 3, desc: 'GRD +3' }, 4: { shield: true, desc: 'Escudo Protetor' } },
+    Algoz: { 2: { atk: 4, desc: 'POW +4' }, 4: { crit: 0.2, desc: 'Crítico: 20%' } },
+    Erudito: { 2: { cost: 2, desc: 'Custo -2' }, 4: { cost: 4, desc: 'Custo -4' } },
+    Zelador: { 2: { heal: 2, desc: 'Cura 2' }, 4: { heal: 3, desc: 'Cura +3 Adicional' } }
   };
 
-  // Calcula bônus totais para exibição
-  let totalAtkBonus = 0;
-  let totalDefBonus = 0;
   const activeEffects = [];
+  let totalPowBonus = 0;
+  let totalGrdBonus = 0;
 
   for (const [region, count] of Object.entries(synergies.regions)) {
-    if (count >= 3) {
-      const bonus = regionBonuses[region];
-      if (bonus && bonus[3]) {
-        totalAtkBonus += bonus[3].atk || 0;
-        totalDefBonus += bonus[3].def || 0;
-        activeEffects.push(`${region} x${count}: ${bonus[3].desc}`);
+    const bonus = regionBonuses[region];
+    if (bonus) {
+      if (count >= 2 && bonus[2]) {
+        totalPowBonus += bonus[2].atk || 0;
+        totalGrdBonus += bonus[2].def || 0;
+        activeEffects.push(`${region} (Lv1): ${bonus[2].desc}`);
       }
-      if (count >= 5 && bonus && bonus[5]) {
-        totalAtkBonus += bonus[5].atk || 0;
-        totalDefBonus += bonus[5].def || 0;
-        activeEffects.push(`${region} x${count}: ${bonus[5].desc}`);
+      if (count >= 4 && bonus[4]) {
+        totalPowBonus += bonus[4].atk || 0;
+        totalGrdBonus += bonus[4].def || 0;
+        activeEffects.push(`${region} (Lv2): ${bonus[4].desc}`);
       }
-      if (count >= 6 && bonus && bonus[6]) {
-        activeEffects.push(`${region} x${count}: ${bonus[6].desc}`);
+      if (count >= 5 && bonus[5]) {
+        activeEffects.push(`${region} (Lv3): ${bonus[5].desc}`);
       }
     }
   }
 
   for (const [className, count] of Object.entries(synergies.classes)) {
-    if (count >= 2) {
-      const bonus = classBonuses[className];
-      if (bonus && bonus[2]) {
-        totalAtkBonus += bonus[2].atk || 0;
-        totalDefBonus += bonus[2].def || 0;
-        activeEffects.push(`${className} x${count}: ${bonus[2].desc}`);
+    const bonus = classBonuses[className];
+    if (bonus) {
+      if (count >= 2 && bonus[2]) {
+        totalPowBonus += bonus[2].atk || 0;
+        totalGrdBonus += bonus[2].def || 0;
+        activeEffects.push(`${className} (Lv1): ${bonus[2].desc}`);
       }
-      if (count >= 4 && bonus && bonus[4]) {
-        totalAtkBonus += bonus[4].atk || 0;
-        totalDefBonus += bonus[4].def || 0;
-        activeEffects.push(`${className} x${count}: ${bonus[4].desc}`);
+      if (count >= 4 && bonus[4]) {
+        totalPowBonus += bonus[4].atk || 0;
+        totalGrdBonus += bonus[4].def || 0;
+        activeEffects.push(`${className} (Lv2): ${bonus[4].desc}`);
       }
     }
   }
 
   return (
-    <div style={{ marginTop: '10px', background: 'rgba(10, 10, 10, 0.8)', border: '1px solid #e94560', padding: '15px', borderRadius: '8px', boxShadow: '0 0 15px rgba(233, 69, 96, 0.2)' }}>
+    <div style={{ marginTop: '10px', background: 'rgba(10, 10, 10, 0.8)', border: '1px solid var(--accent-color)', padding: '15px', borderRadius: '8px', boxShadow: '0 0 15px rgba(233, 69, 96, 0.2)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-        <h4 style={{ color: '#e94560', textTransform: 'uppercase', fontSize: '14px', margin: 0 }}>🔗 Sinergias Ativas</h4>
+        <h4 style={{ color: 'var(--accent-color)', textTransform: 'uppercase', fontSize: '14px', margin: 0 }}>🔗 Sinergias Ativas</h4>
         <button 
           onClick={() => setIsCodexOpen(true)}
           style={{
-            background: '#e94560',
+            background: 'var(--accent-color)',
             border: 'none',
             color: 'white',
             fontSize: '10px',
@@ -140,7 +110,7 @@ export default function Synergies({ synergies }) {
         </button>
       </div>
       
-      {(totalAtkBonus > 0 || totalDefBonus > 0) && (
+      {(totalPowBonus > 0 || totalGrdBonus > 0) && (
         <div style={{ 
           display: 'flex', 
           justifyContent: 'center', 
@@ -153,15 +123,15 @@ export default function Synergies({ synergies }) {
         }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#ff4d4d' }}>
-              +{totalAtkBonus}
+              +{totalPowBonus}
             </div>
-            <div style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase' }}>ATK Extra</div>
+            <div style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase' }}>Poder (POW)</div>
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#fff' }}>
-              +{totalDefBonus}
+              +{totalGrdBonus}
             </div>
-            <div style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase' }}>DEF Extra</div>
+            <div style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase' }}>Guarda (GRD)</div>
           </div>
         </div>
       )}
@@ -177,7 +147,7 @@ export default function Synergies({ synergies }) {
               marginBottom: '6px',
               padding: '4px 8px',
               background: 'rgba(233, 69, 96, 0.15)',
-              borderLeft: '3px solid #e94560',
+              borderLeft: '3px solid var(--accent-color)',
               borderRadius: '2px'
             }}>
               <span style={{color: '#ff4d4d', marginRight: '5px'}}>✨</span> {effect}
@@ -187,10 +157,9 @@ export default function Synergies({ synergies }) {
       </div>
       
       <p style={{ fontSize: '10px', color: '#666', marginTop: '15px', textAlign: 'center', fontStyle: 'italic' }}>
-        ⚠️ Bônus calculados durante o combate
+        ⚠️ Bônus de POW/GRD calculados em tempo real
       </p>
 
-      {/* Guia Lateral Codex */}
       <SynergyCodex 
         isOpen={isCodexOpen} 
         onClose={() => setIsCodexOpen(false)} 

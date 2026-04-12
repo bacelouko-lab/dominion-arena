@@ -30,7 +30,8 @@ export default function Field({ field, onDrop, onDragStart, onDragEnd, onDragOve
       </h3>
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
+        gridTemplateColumns: 'repeat(3, 130px)',
+        justifyContent: 'center',
         gridTemplateRows: 'repeat(2, 1fr)',
         gap: '15px',
         background: 'rgba(10, 10, 10, 0.4)',
@@ -54,7 +55,8 @@ export default function Field({ field, onDrop, onDragStart, onDragEnd, onDragOve
               alignItems: 'center',
               justifyContent: 'center',
               position: 'relative',
-              minHeight: '190px',
+              width: '130px',
+              height: '190px',
               transition: 'all 0.3s ease'
             }}
           >

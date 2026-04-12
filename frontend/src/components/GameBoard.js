@@ -624,6 +624,8 @@ export default function GameBoard({ gameState, gameId, username }) {
               onBuy={(card, index) => socket.emit('buy-card', { cardInstanceId: card.instanceId })} 
               onReturnCard={returnCardToShop}
               gold={currentPlayerObj?.gold || 0} 
+              playerField={currentPlayerObj?.field || []}
+              playerHand={currentPlayerObj?.hand || []}
             />
             <div onDragOver={handleDragOver}>
               <Hand 

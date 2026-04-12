@@ -120,3 +120,187 @@ input:focus, textarea:focus {
 .mt-2 { margin-top: 20px; }
 .mb-1 { margin-bottom: 10px; }
 .mb-2 { margin-bottom: 20px; }
+/* CONFIGURAÇÕES GLOBAIS DE TIPOGRAFIA */
+body {
+  font-family: 'Cinzel', serif;
+}
+
+/* SISTEMA DE MOLDURAS PREMIUM */
+.dominion-card {
+  position: relative;
+  width: 130px;
+  height: 190px;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  overflow: visible; /* Para permitir o brilho da aura */
+  background: #0a0a0a;
+}
+
+/* Materiais por Custo */
+/* Bronze (Custo 2) */
+.frame-bronze {
+  border: 3px solid #8B4513;
+  box-shadow: inset 0 0 10px #4b2a00, 0 0 5px rgba(0,0,0,0.8);
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a1a00 100%);
+}
+.frame-bronze::after {
+  content: ''; position: absolute; inset: 2px;
+  border: 1px solid rgba(205, 127, 50, 0.4); border-radius: 7px;
+}
+
+/* Prata (Custo 3) */
+.frame-silver {
+  border: 3px solid #C0C0C0;
+  box-shadow: inset 0 0 10px #666, 0 0 5px rgba(0,0,0,0.8);
+  background: linear-gradient(135deg, #1a1a1a 0%, #222 100%);
+}
+.frame-silver::after {
+  content: ''; position: absolute; inset: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 7px;
+}
+
+/* Ouro (Custo 5) */
+.frame-gold {
+  border: 3px solid #FFD700;
+  box-shadow: inset 0 0 15px #b8860b, 0 0 10px rgba(218, 165, 32, 0.5);
+  background: linear-gradient(135deg, #1a1a1a 0%, #302000 100%);
+}
+.frame-gold::after {
+  content: ''; position: absolute; inset: 2px;
+  border: 1px solid rgba(255, 215, 0, 0.5); border-radius: 7px;
+}
+
+/* Diamante (Custo 8) */
+.frame-diamond {
+  border: 3px solid #B9F2FF;
+  box-shadow: inset 0 0 20px #00d2ff, 0 0 15px rgba(185, 242, 255, 0.6);
+  background: radial-gradient(circle at center, #1a1a1a 0%, #001a1a 100%);
+  animation: diamond-shimmer 4s infinite linear;
+}
+.frame-diamond::after {
+  content: ''; position: absolute; inset: 2px;
+  border: 1px solid rgba(185, 242, 255, 0.6); border-radius: 7px;
+}
+
+@keyframes diamond-shimmer {
+  0% { filter: brightness(1) hue-rotate(0deg); }
+  50% { filter: brightness(1.2) hue-rotate(10deg); }
+  100% { filter: brightness(1) hue-rotate(0deg); }
+}
+
+/* AURAS REGIONAIS (GLOW EXTERNO) */
+.aura-solari { filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6)); }
+.aura-gladius { filter: drop-shadow(0 0 8px rgba(255, 69, 0, 0.6)); }
+.aura-aether { filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.6)); }
+.aura-veridian { filter: drop-shadow(0 0 8px rgba(34, 139, 34, 0.6)); }
+.aura-umbra { filter: drop-shadow(0 0 8px rgba(138, 43, 226, 0.6)); }
+
+/* ELEMENTOS INTERNOS DA CARTA */
+.card-inner-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 8px;
+  z-index: 2;
+  position: relative;
+}
+
+.card-title {
+  font-family: 'Cinzel', serif;
+  font-weight: 800;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+  white-space: nowrap;
+}
+
+.card-art-frame {
+  height: 95px;
+  margin: 4px 0;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: inset 0 0 10px #000;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #000;
+}
+
+.card-dadiva-box {
+  background: rgba(0,0,0,0.7);
+  border: 1px solid rgba(255,255,255,0.05);
+  padding: 6px;
+  border-radius: 4px;
+  height: 50px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  margin-top: 2px;
+}
+
+.card-dadiva-label {
+  font-size: 8px;
+  color: var(--solari-color);
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+}
+
+.card-dadiva-text {
+  font-size: 9px;
+  color: #fff;
+  line-height: 1.1;
+  font-weight: 400;
+}
+
+/* ÍCONES DE STATUS (CANTOS) */
+.stats-container {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.stat-shield {
+  width: 32px;
+  height: 36px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+}
+
+.stat-shield.pow {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 60"><path d="M25 5 L45 15 L45 35 Q45 55 25 58 Q5 55 5 35 L5 15 Z" fill="%23b30000" stroke="%23300" stroke-width="2"/><path d="M25 15 L30 30 L25 45 L20 30 Z" fill="%23fff" opacity="0.3"/></svg>');
+}
+
+.stat-shield.grd {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 60"><path d="M5 10 L25 5 L45 10 L45 35 Q45 55 25 58 Q5 55 5 35 Z" fill="%232c3e50" stroke="%23000" stroke-width="2"/><path d="M15 20 L25 15 L35 20 L35 40 L25 45 L15 40 Z" fill="%23fff" opacity="0.1"/></svg>');
+}
+
+.stat-value {
+  font-family: 'Cinzel', serif;
+  font-weight: 900;
+  font-size: 14px;
+  color: white;
+  text-shadow: 0 0 5px #000;
+}
+
+.card-footer-class {
+  position: absolute;
+  bottom: 4px;
+  width: 100%;
+  text-align: center;
+  font-size: 9px;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 700;
+}

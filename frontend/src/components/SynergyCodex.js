@@ -1,65 +1,49 @@
 import React from 'react';
 
 const regionData = [
-  { name: 'Vulcão', levels: [
-    { threshold: 3, desc: 'ATK +3' },
-    { threshold: 5, desc: 'ATK +2 (Total +5)' },
-    { threshold: 6, desc: 'ATK x1.5' }
+  { name: 'Solari', levels: [
+    { threshold: 2, desc: 'Poder (POW) +2 para todos Solari' },
+    { threshold: 4, desc: 'Invocador do Sol: +4 POW adicional' },
+    { threshold: 5, desc: 'Ascensão Total: POW x1.5 para a equipe' }
   ]},
-  { name: 'Montanha', levels: [
-    { threshold: 3, desc: 'DEF +3' },
-    { threshold: 5, desc: 'ATK +2 / DEF +5' },
-    { threshold: 6, desc: 'DEF +5 adicional' }
+  { name: 'Gladius', levels: [
+    { threshold: 2, desc: 'Guarda (GRD) +2 para todos Gladius' },
+    { threshold: 4, desc: 'Aparada: Ignora 2 de dano recebido' },
+    { threshold: 5, desc: 'Retaliação: Reflete 50% do dano na Guarda' }
   ]},
-  { name: 'Céu', levels: [
-    { threshold: 3, desc: 'Ganha 2 dados fixos' },
-    { threshold: 5, desc: '1 carta de custo 0' },
-    { threshold: 6, desc: '+2 ATK por cada ponto de dado' }
+  { name: 'Aether', levels: [
+    { threshold: 2, desc: 'Mágica: +1 dado de ouro' },
+    { threshold: 4, desc: 'Economia: 1 carta grátis por turno' },
+    { threshold: 5, desc: 'Transcendência: Todos os dados revelam 6' }
   ]},
-  { name: 'Lago', levels: [
-    { threshold: 3, desc: 'Dado par concede +3 ATK' },
-    { threshold: 5, desc: 'Escolhe o melhor entre os dados rolados' },
-    { threshold: 6, desc: 'Mínimo de 6 nos dados / +2 DEF' }
+  { name: 'Veridian', levels: [
+    { threshold: 2, desc: 'Cura: Recupera 2 de vida ao fim do turno' },
+    { threshold: 4, desc: 'Simbiose: Transfere 2 POW para o aliado mais forte' },
+    { threshold: 5, desc: 'Vitalidade: Vida Máxima +5' }
   ]},
-  { name: 'Floresta', levels: [
-    { threshold: 3, desc: 'ATK +2 / DEF +2' },
-    { threshold: 4, desc: 'Copia sinergia de um aliado' },
-    { threshold: 5, desc: 'Copia sinergia (Evoluído)' }
-  ]},
-  { name: 'Deserto', levels: [
-    { threshold: 3, desc: 'Pode escolher o alvo do ataque' },
-    { threshold: 5, desc: 'Anula a 1ª carta do oponente' },
-    { threshold: 6, desc: 'Impede sinergias do oponente contra você' }
+  { name: 'Umbra', levels: [
+    { threshold: 2, desc: 'Penumbra: Ignora 2 de GRD do oponente' },
+    { threshold: 4, desc: 'Execução: Derrota inimigos com menos de 3 vida' },
+    { threshold: 5, desc: 'Lâmina Maldita: Dano causado ignora escudos' }
   ]}
 ];
 
 const classData = [
-  { name: 'Guerreiro', levels: [
-    { threshold: 2, desc: 'ATK +2' },
-    { threshold: 4, desc: 'DEF +4' }
+  { name: 'Vanguarda', levels: [
+    { threshold: 2, desc: 'Muralha: Guarda +3' },
+    { threshold: 4, desc: 'Invulnerável: Bloqueia o primeiro ataque do round' }
   ]},
-  { name: 'Mago', levels: [
-    { threshold: 2, desc: '2 de Dano Direto à vida' },
-    { threshold: 4, desc: 'Ativa Habilidade Ativa 2x' }
+  { name: 'Algoz', levels: [
+    { threshold: 2, desc: 'Foco: Poder +4' },
+    { threshold: 4, desc: 'Crítico: 20% de causar dano dobrado' }
   ]},
-  { name: 'Ladino', levels: [
-    { threshold: 2, desc: 'Ignora 2 de DEF do alvo' },
-    { threshold: 4, desc: 'Anula 1 carta aleatória do alvo' }
+  { name: 'Erudito', levels: [
+    { threshold: 2, desc: 'Perspicácia: Custo de todas as cartas -2' },
+    { threshold: 4, desc: 'Gênio: Cartas custam -4' }
   ]},
-  { name: 'Suporte', levels: [
-    { threshold: 2, desc: 'Cura 2 de vida' },
-    { threshold: 4, desc: 'DEF +3 e Cura 3 de vida' }
-  ]},
-  { name: 'Monstro', levels: [
-    { threshold: 2, desc: 'ATK +1' },
-    { threshold: 4, desc: 'ATK +2' }
-  ]},
-  { name: 'Mercador', levels: [
-    { threshold: 2, desc: 'Custo de cartas -1' },
-    { threshold: 4, desc: 'Custo de cartas -3' }
-  ]},
-  { name: 'Dragão', levels: [
-    { threshold: 2, desc: 'Dano final x2 em combate' }
+  { name: 'Zelador', levels: [
+    { threshold: 2, desc: 'Suporte: Cura 2 de vida ao fim do turno' },
+    { threshold: 4, desc: 'Bênção: Cura 3 de vida adicional' }
   ]}
 ];
 
@@ -93,7 +77,7 @@ export default function SynergyCodex({ isOpen, onClose, userSynergies }) {
         width: '320px',
         height: '100vh',
         background: '#0a0a0a',
-        borderLeft: '2px solid #e94560',
+        borderLeft: '2px solid var(--accent-color)',
         padding: '20px',
         zIndex: 1000,
         transition: 'right 0.3s ease-in-out',
@@ -102,13 +86,13 @@ export default function SynergyCodex({ isOpen, onClose, userSynergies }) {
         color: '#fff'
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ color: '#e94560', margin: 0, fontSize: '18px', textTransform: 'uppercase', letterSpacing: '2px' }}>📖 Codex de Guerra</h2>
+          <h2 style={{ color: 'var(--accent-color)', margin: 0, fontSize: '18px', textTransform: 'uppercase', letterSpacing: '2px' }}>📖 Codex de Guerra</h2>
           <button 
             onClick={onClose}
             style={{ 
               background: 'none', 
               border: 'none', 
-              color: '#e94560', 
+              color: 'var(--accent-color)', 
               fontSize: '24px', 
               cursor: 'pointer' 
             }}
@@ -127,8 +111,8 @@ export default function SynergyCodex({ isOpen, onClose, userSynergies }) {
             const currentCount = regions[region.name] || 0;
             return (
               <div key={region.name} style={{ marginBottom: '15px' }}>
-                <div style={{ fontSize: '13px', fontWeight: 'bold', color: currentCount > 0 ? '#ff4d4d' : '#fff' }}>
-                  {region.name} {currentCount > 0 && <span style={{fontSize: '10px', color: '#ff4d4d'}}>({currentCount})</span>}
+                <div style={{ fontSize: '13px', fontWeight: 'bold', color: currentCount > 0 ? 'var(--accent-color)' : '#fff' }}>
+                  {region.name} {currentCount > 0 && <span style={{fontSize: '10px', color: 'var(--accent-color)'}}>({currentCount})</span>}
                 </div>
                 {region.levels.map((lvl, idx) => {
                   const isActive = currentCount >= lvl.threshold;
@@ -141,9 +125,9 @@ export default function SynergyCodex({ isOpen, onClose, userSynergies }) {
                       padding: '4px',
                       backgroundColor: isActive ? 'rgba(233, 69, 96, 0.2)' : 'transparent',
                       borderRadius: '4px',
-                      borderLeft: isActive ? '2px solid #e94560' : '2px solid transparent'
+                      borderLeft: isActive ? '2px solid var(--accent-color)' : '2px solid transparent'
                     }}>
-                      <span style={{ fontWeight: 'bold', color: isActive ? '#e94560' : 'inherit' }}>{lvl.threshold}+:</span> {lvl.desc}
+                      <span style={{ fontWeight: 'bold', color: isActive ? 'var(--accent-color)' : 'inherit' }}>{lvl.threshold}+:</span> {lvl.desc}
                       {isActive && <span style={{ marginLeft: '5px' }}>✅</span>}
                     </div>
                   );
@@ -159,8 +143,8 @@ export default function SynergyCodex({ isOpen, onClose, userSynergies }) {
             const currentCount = classes[cls.name] || 0;
             return (
               <div key={cls.name} style={{ marginBottom: '15px' }}>
-                <div style={{ fontSize: '13px', fontWeight: 'bold', color: currentCount > 0 ? '#ff4d4d' : '#fff' }}>
-                  {cls.name} {currentCount > 0 && <span style={{fontSize: '10px', color: '#ff4d4d'}}>({currentCount})</span>}
+                <div style={{ fontSize: '13px', fontWeight: 'bold', color: currentCount > 0 ? 'var(--accent-color)' : '#fff' }}>
+                  {cls.name} {currentCount > 0 && <span style={{fontSize: '10px', color: 'var(--accent-color)'}}>({currentCount})</span>}
                 </div>
                 {cls.levels.map((lvl, idx) => {
                   const isActive = currentCount >= lvl.threshold;
@@ -173,9 +157,9 @@ export default function SynergyCodex({ isOpen, onClose, userSynergies }) {
                       padding: '4px',
                       backgroundColor: isActive ? 'rgba(233, 69, 96, 0.2)' : 'transparent',
                       borderRadius: '4px',
-                      borderLeft: isActive ? '2px solid #e94560' : '2px solid transparent'
+                      borderLeft: isActive ? '2px solid var(--accent-color)' : '2px solid transparent'
                     }}>
-                      <span style={{ fontWeight: 'bold', color: isActive ? '#e94560' : 'inherit' }}>{lvl.threshold}+:</span> {lvl.desc}
+                      <span style={{ fontWeight: 'bold', color: isActive ? 'var(--accent-color)' : 'inherit' }}>{lvl.threshold}+:</span> {lvl.desc}
                       {isActive && <span style={{ marginLeft: '5px' }}>✅</span>}
                     </div>
                   );
