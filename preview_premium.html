@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview Premium: Sentinela Solari</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: #050505;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Cinzel', serif;
+        }
+
+        /* SISTEMA DE MOLDURAS PREMIUM REPRODUZIDO DO GLOBALS.CSS */
+        .dominion-card {
+            position: relative;
+            width: 130px;
+            height: 190px;
+            border-radius: 12px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            overflow: visible;
+            background: #0a0a0a;
+            user-select: none;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            cursor: pointer;
+        }
+
+        .dominion-card:hover {
+            transform: scale(1.8) translateY(-20px);
+            z-index: 1000;
+            filter: brightness(1.1);
+        }
+
+        /* Ouro (Custo 5) */
+        .frame-gold {
+            border: 4px solid #FFD700;
+            box-shadow: 
+                inset 0 0 15px rgba(184, 134, 11, 0.8),
+                0 0 20px rgba(255, 215, 0, 0.3);
+            background: linear-gradient(135deg, #1a1a1a 0%, #2c1e00 100%);
+        }
+        .frame-gold::after {
+            content: ''; position: absolute; inset: 1px;
+            border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px;
+            pointer-events: none;
+        }
+
+        /* Aura Solari */
+        .aura-solari { 
+            filter: drop-shadow(0 0 12px rgba(255, 166, 0, 0.8));
+            animation: aura-pulse-solari 3s infinite ease-in-out;
+        }
+
+        @keyframes aura-pulse-solari {
+            0%, 100% { filter: drop-shadow(0 0 10px rgba(255, 166, 0, 0.6)); }
+            50% { filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.9)); }
+        }
+
+        .card-inner-layout {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            padding: 8px;
+            z-index: 2;
+            position: relative;
+        }
+
+        .card-title {
+            font-weight: 800;
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            white-space: nowrap;
+        }
+
+        .card-cost-badge {
+            background: radial-gradient(circle, #ffd700 0%, #b8860b 100%);
+            width: 22px; height: 22px; borderRadius: 50%;
+            display: flex; alignItems: center; justifyContent: center;
+            border: 2px solid #000; boxShadow: 0 2px 4px rgba(0,0,0,0.5);
+            color: #000; fontWeight: 900; fontSize: 12px;
+        }
+
+        .card-art-frame {
+            height: 95px;
+            margin: 4px 0;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: inset 0 0 10px #000;
+            border-radius: 4px;
+            overflow: hidden;
+            background: #000;
+            position: relative;
+        }
+
+        .card-art-frame img {
+            width: 100%; height: 100%; object-fit: cover;
+        }
+
+        .card-dadiva-box {
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            padding: 4px 8px;
+            border-radius: 6px;
+            height: 52px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            text-align: center;
+            margin-top: 4px;
+            position: relative;
+            z-index: 5;
+        }
+
+        .card-dadiva-label {
+            font-size: 8px;
+            color: #FFD700;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 2px;
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+        }
+
+        .card-dadiva-text {
+            font-size: 8.5px;
+            color: #e0e0e0;
+            line-height: 1.2;
+            font-weight: 500;
+        }
+
+        .stats-container {
+            position: absolute;
+            bottom: 12px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 4px;
+        }
+
+        .stat-shield {
+            width: 32px;
+            height: 36px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+        }
+
+        .stat-shield.pow {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 60"><path d="M25 5 L45 15 L45 35 Q45 55 25 58 Q5 55 5 35 L5 15 Z" fill="%23b30000" stroke="%23300" stroke-width="2"/><path d="M25 15 L30 30 L25 45 L20 30 Z" fill="%23fff" opacity="0.3"/></svg>');
+        }
+
+        .stat-shield.grd {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 60"><path d="M5 10 L25 5 L45 10 L45 35 Q45 55 25 58 Q5 55 5 35 Z" fill="%232c3e50" stroke="%23000" stroke-width="2"/><path d="M15 20 L25 15 L35 20 L35 40 L25 45 L15 40 Z" fill="%23fff" opacity="0.1"/></svg>');
+        }
+
+        .stat-value {
+            font-weight: 900;
+            font-size: 14px;
+            color: white;
+            text-shadow: 0 0 5px #000;
+        }
+
+        .card-footer-class {
+            position: absolute;
+            bottom: 4px;
+            width: 100%;
+            text-align: center;
+            font-size: 9px;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dominion-card frame-gold aura-solari">
+        <div class="card-inner-layout">
+            <div style="display: flex; justify-content: space-between; align-items: center; height: 24px; padding: 0 2px;">
+                <div class="card-title">Sentinela Solari</div>
+                <div class="card-cost-badge">5</div>
+            </div>
+
+            <div class="card-art-frame">
+                <!-- Usando a imagem local se possível, ou placeholder para o preview HTML direto -->
+                <img src="frontend/public/assets/cards/sentinela_solari.png" alt="Sentinela Solari" onerror="this.src='https://via.placeholder.com/130x100?text=Arte+Premium'">
+                <div style="position: absolute; bottom: 2px; right: 4px; font-size: 7px; color: #ffd700; text-transform: uppercase; font-weight: bold; text-shadow: 0 1px 2px #000; opacity: 0.9;">Solari</div>
+            </div>
+
+            <div class="card-dadiva-box">
+                <div class="card-dadiva-label">Dádiva de Ascensão</div>
+                <div class="card-dadiva-text">Ascensão: +4 GRD e inflige Queimadura leve (+2 dano direto).</div>
+            </div>
+
+            <div class="stats-container">
+                <div class="stat-shield pow">
+                    <span style="font-size: 6px; color: rgba(255,255,255,0.7); font-weight: bold; margin-bottom: -2px;">POW</span>
+                    <span class="stat-value">2</span>
+                </div>
+                <div class="stat-shield grd">
+                    <span style="font-size: 6px; color: rgba(255,255,255,0.7); font-weight: bold; margin-bottom: -2px;">GRD</span>
+                    <span class="stat-value">6</span>
+                </div>
+            </div>
+
+            <div class="card-footer-class">Vanguarda</div>
+        </div>
+    </div>
+
+</body>
+</html>
