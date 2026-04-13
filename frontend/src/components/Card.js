@@ -38,10 +38,11 @@ export default function Card({ card, onClick, onSell, isShop = false, isSynergyM
       style={{
         zIndex: isZoomed ? 1000 : 1,
         transform: isZoomed ? 'scale(1.8)' : 'scale(1)',
-        cursor: 'pointer'
+        cursor: 'pointer',
+        pointerEvents: 'auto' // Garante que a carta em si receba eventos
       }}
     >
-      <div className="card-inner-layout">
+      <div className="card-inner-layout" style={{ pointerEvents: 'none' }}>
         {/* TOPO: Nome, Custo, Região */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', height: '28px' }}>
           <div className="card-title" style={{ marginTop: '2px' }}>

@@ -62,9 +62,11 @@ export default function Field({ field, onDrop, onDragStart, onDragEnd, onDragOve
           >
             {card ? (
               <div 
-                draggable={isDropTarget} 
+                draggable={true} 
                 onDragStart={(e) => onDragStart && onDragStart(e, { type: 'field', index })}
                 onDragEnd={onDragEnd}
+                onDrop={(e) => handleSlotDrop(e, index)}
+                onDragOver={handleDragOver}
               >
                 <Card 
                   card={card} 

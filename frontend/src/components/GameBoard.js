@@ -211,7 +211,8 @@ export default function GameBoard({ gameState, gameId, username }) {
   const handleDrop = (e, toData) => {
     e.preventDefault();
     setIsDragging(false);
-    if (!isMyTurnAndAlive || phase !== 'position') return;
+    if (!isMyTurnAndAlive) return;
+    if (phase !== 'position' && phase !== 'buy') return;
     
     let fromData = draggedCardIndex;
     if (!fromData) {

@@ -724,16 +724,23 @@ class GameLogic {
 
   getRegionBonus(region, level) {
     const bonuses = {
-      Vulcão: { 3: { atk: 3, def: 0 }, 5: { atk: 2, def: 0 }, 6: { atkMulti: 1.5 } },
-      Montanha: { 3: { atk: 0, def: 3 }, 5: { atk: 2, def: 5 }, 6: { def: 5 } },
-      Céu: { 3: { atk: 2, def: 0 }, 5: { atk: 3, def: 0 }, 6: { atk: 4, def: 0 } },
-      Lago: { 3: { atk: 2, def: 0 }, 5: { def: 3 }, 6: { def: 4 } },
-      Floresta: { 3: { atk: 2, def: 2 } },
-      Deserto: { 3: { atk: 2, def: 0 } }
+      Solari: { 2: { atk: 4, def: 0 }, 4: { directDamage: 4 }, 5: { attackMultiplier: 1.5 } },
+      Gladius: { 2: { atk: 0, def: 4 }, 4: { reflectDamage: 0.5 }, 5: { maxDamageTaken: 5 } },
+      Aether: { 2: { goldBonus: 2 }, 4: { freeReroll: true }, 5: { ignoreDefense: true } },
+      Veridian: { 2: { healingEndOfTurn: 2 }, 4: { extraMaxLife: 8 }, 5: { symbiosisActive: true } },
+      Umbra: { 2: { atk: 2, def: 0 }, 4: { atk: 0, def: 6 }, 5: { directDamage: 6 } }
     };
 
     const bonus = bonuses[region]?.[level] || { atk: 0, def: 0 };
-    return { atk: bonus.atk || 0, def: bonus.def || 0, multi: bonus.atkMulti || 1 };
+    return { 
+      atk: bonus.atk || 0, 
+      def: bonus.def || 0, 
+      multi: bonus.attackMultiplier || 1,
+      directDamage: bonus.directDamage || 0,
+      reflectDamage: bonus.reflectDamage || 0,
+      maxDamageTaken: bonus.maxDamageTaken || 0,
+      ignoreDefense: bonus.ignoreDefense || false
+    };
   }
 
   applySynergyBonuses(player, isAttacking = true) {
