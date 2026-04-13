@@ -109,9 +109,21 @@ class GameLogic {
     if (player) {
       player.hasActedThisTurn = false;
       player.choseShop = false;
-      player.gold = 0;
       player.shield = 0;
       player.costReduction = 0;
+      player.goldBonus = 0;
+      player.healingEndOfTurn = 0;
+      player.reflectDamage = 0;
+      player.extraMaxLife = 0;
+      player.ignoreDefense = false;
+      player.maxDamageTaken = 0;
+      player.symbiosisActive = false;
+      player.wisdomBonus = false;
+      player.transcendence = false;
+      player.damageReduction = 0;
+      player.critChance = 0;
+      player.hasExecutionAbility = false;
+      player.directDamageBlocked = false;
       player.hasUsedInvulnerable = false;
       player.extraDiceBonus = 0;
       player.monstroDirectDamage = 0;
@@ -743,69 +755,84 @@ class GameLogic {
     };
   }
 
-  applySynergyBonuses(player, isAttacking = true) {
+  applySynergyBonuses(player) {
     let synergies = player.synergies || { regions: {}, classes: {} };
-    let atkBonus = 0;
-    let defBonus = 0;
-    let directDamage = 0;
-    let attackMultiplier = 1;
+    let bonuses = {
+      atkBonus: 0,
+      defBonus: 0,
+      directDamage: 0,
+      attackMultiplier: 1,
+      shield: 0,
+      reflectDamage: 0,
+      goldBonus: 0,
+      healingEndOfTurn: 0,
+      extraMaxLife: 0,
+      ignoreDefense: false,
+      maxDamageTaken: 0,
+      symbiosisActive: false,
+      wisdomBonus: false,
+      transcendence: false,
+      damageReduction: 0,
+      critChance: 0
+    };
 
-    // Bônus do Anjo Governante (Novo ID: 8 ou 6 - Avatar de Helios ou Invocador do Sol)
+    // Bônus do Anjo Governante
     if (player.anjoGovernanteBonus > 0) {
-      atkBonus += player.anjoGovernanteBonus;
+      bonuses.atkBonus += player.anjoGovernanteBonus;
     }
 
     // Novas Sinergias de Região (2, 4, 5)
     for (const [region, count] of Object.entries(synergies.regions)) {
       if (count >= 2) {
-        if (region === 'Solari') atkBonus += 4;
-        if (region === 'Gladius') defBonus += 4;
-        if (region === 'Aether') player.goldBonus = (player.goldBonus || 0) + 2;
-        if (region === 'Veridian') player.healingEndOfTurn = (player.healingEndOfTurn || 0) + 2;
-        if (region === 'Umbra') atkBonus += 2; 
+        if (region === 'Solari') bonuses.atkBonus += 4;
+        if (region === 'Gladius') bonuses.defBonus += 4;
+        if (region === 'Aether') bonuses.goldBonus += 2;
+        if (region === 'Veridian') bonuses.healingEndOfTurn += 2;
+        if (region === 'Umbra') bonuses.atkBonus += 2; 
       }
       if (count >= 4) {
-        if (region === 'Solari') directDamage += 4;
-        if (region === 'Gladius') player.reflectDamage = 0.5;
-        if (region === 'Aether') player.freeReroll = true;
-        if (region === 'Veridian') player.extraMaxLife = 8;
-        if (region === 'Umbra') defBonus += 6;
+        if (region === 'Solari') bonuses.directDamage += 4;
+        if (region === 'Gladius') bonuses.reflectDamage = 0.5;
+        if (region === 'Aether') bonuses.freeReroll = true;
+        if (region === 'Veridian') bonuses.extraMaxLife = 8;
+        if (region === 'Umbra') bonuses.defBonus += 6;
       }
       if (count >= 5) {
-        if (region === 'Solari') attackMultiplier *= 1.5;
-        if (region === 'Gladius') player.maxDamageTaken = 5;
-        if (region === 'Aether') player.ignoreDefense = true;
-        if (region === 'Veridian') player.symbiosisActive = true;
-        if (region === 'Umbra') directDamage += 6;
+        if (region === 'Solari') bonuses.attackMultiplier *= 1.5;
+        if (region === 'Gladius') bonuses.maxDamageTaken = 5;
+        if (region === 'Aether') bonuses.ignoreDefense = true;
+        if (region === 'Veridian') bonuses.symbiosisActive = true;
+        if (region === 'Umbra') bonuses.directDamage += 6;
       }
     }
 
     // Novas Sinergias de Classe (2, 4)
     for (const [className, count] of Object.entries(synergies.classes)) {
       if (count >= 2) {
-        if (className === 'Vanguarda') defBonus += 5;
-        if (className === 'Algoz') atkBonus += 5;
-        if (className === 'Erudito') player.wisdomBonus = true;
-        if (className === 'Zelador') player.shield = (player.shield || 0) + 4;
+        if (className === 'Vanguarda') bonuses.defBonus += 5;
+        if (className === 'Algoz') bonuses.atkBonus += 5;
+        if (className === 'Erudito') bonuses.wisdomBonus = true;
+        if (className === 'Zelador') bonuses.shield = 4;
       }
       if (count >= 4) {
-        if (className === 'Vanguarda') player.damageReduction = 2;
-        if (className === 'Algoz') player.critChance = 0.4;
-        if (className === 'Erudito') player.transcendence = true;
+        if (className === 'Vanguarda') bonuses.damageReduction = 2;
+        if (className === 'Algoz') bonuses.critChance = 0.4;
+        if (className === 'Erudito') bonuses.transcendence = true;
         if (className === 'Zelador') {
-          player.life = Math.min(player.extraMaxLife ? 20 + player.extraMaxLife : 20, player.life + 3);
-          atkBonus += 2;
+          // A cura aqui é um efeito "on-combat-start", vamos processar no final do cálculo
+          bonuses.healingOnCombat = 3;
+          bonuses.atkBonus += 2;
         }
       }
     }
 
     // Cálculo de Simbiose (Veridian 5)
-    if (player.symbiosisActive) {
-      const totalGrd = player.field.reduce((acc, c) => acc + (c ? c.def : 0), 0) + defBonus;
-      atkBonus += Math.floor(totalGrd * 0.5);
+    if (bonuses.symbiosisActive) {
+      let vanguardaCount = synergies.classes['Vanguarda'] || 0;
+      bonuses.atkBonus += vanguardaCount * 2;
     }
 
-    return { atkBonus, defBonus, directDamage, attackMultiplier };
+    return bonuses;
   }
 
   // As habilidades passivas agora são processadas diretamente em applyActiveAbilities ou applySynergyBonuses para simplificar o fluxo.
@@ -933,21 +960,31 @@ class GameLogic {
     const attackerActiveEffects = this.applyActiveAbilities(attacker, defender);
     const defenderActiveEffects = this.applyActiveAbilities(defender, attacker); 
     
+    // --- APLICAÇÃO DE BÔNUS PASSIVOS NO JOGADOR PARA O COMBATE ---
+    attacker.transcendence = attackerSynBonuses.transcendence;
+    attacker.critChance = attackerSynBonuses.critChance;
+    attacker.extraMaxLife = attackerSynBonuses.extraMaxLife;
+    attacker.ignoreDefense = attackerSynBonuses.ignoreDefense;
+
+    defender.damageReduction = defenderSynBonuses.damageReduction;
+    defender.reflectDamage = defenderSynBonuses.reflectDamage;
+    defender.maxDamageTaken = defenderSynBonuses.maxDamageTaken;
+    defender.extraMaxLife = defenderSynBonuses.extraMaxLife;
+
+    // Cura Zelador Nv4 (Ocorre no início do combate)
+    if (attackerSynBonuses.healingOnCombat) {
+      attacker.life = Math.min(attacker.extraMaxLife ? 20 + attacker.extraMaxLife : 20, attacker.life + attackerSynBonuses.healingOnCombat);
+    }
+    if (defenderSynBonuses.healingOnCombat) {
+      defender.life = Math.min(defender.extraMaxLife ? 20 + defender.extraMaxLife : 20, defender.life + defenderSynBonuses.healingOnCombat);
+    }
+
     // --- CÁLCULO DA GUARDA (GRD) ---
     let defenderBaseGrd = 0;
     for (const card of defender.field) {
       if (card && card.def) defenderBaseGrd += card.def;
     }
     
-    // Habilidade Deus do Caos (id:24) - Inverte stats do oponente
-    if (attackerActiveEffects.swapStatsAbility) {
-       console.log(`🌀 Deus do Caos: ${attacker.username} inverteu o Poder e a Guarda de ${defender.username}!`);
-       // Simplificado: permutamos as bases antes dos bônus de sinergia
-       let attackerBasePowTemp = 0;
-       for (const card of attacker.field) if (card && card.atk) attackerBasePowTemp += card.atk;
-       // (Lógica de inversão completa exigiria mais estado, vamos focar no efeito bruto)
-    }
-
     let defenderTotalGrd = defenderBaseGrd + defenderSynBonuses.defBonus + defenderActiveEffects.defBonus;
     
     if (attacker.ignoreDefense || attackerSynBonuses.ignoreDefense) {
@@ -955,17 +992,18 @@ class GameLogic {
       defenderTotalGrd = 0;
     }
     
-    console.log(`   🛡️ GUARDA ${defender.username}: ${defenderBaseGrd} (Base) + ${defenderSynBonuses.defBonus} (Sinergia) + ${defenderActiveEffects.defBonus} (Ativa) = ${defenderTotalGrd}`);
-    
     if (attackerActiveEffects.reduceDefense > 0) {
       defenderTotalGrd = Math.max(0, defenderTotalGrd - attackerActiveEffects.reduceDefense);
       console.log(`   📉 Redução de Guarda: -${attackerActiveEffects.reduceDefense}`);
     }
     
-    if (defender.shield > 0) {
-      defenderTotalGrd += defender.shield;
-      console.log(`   🧱 Escudo Ativo: +${defender.shield}`);
-      defender.shield = 0; // Consumido
+    console.log(`   🛡️ GUARDA ${defender.username}: ${defenderBaseGrd} (Base) + ${defenderSynBonuses.defBonus} (Sinergia) + ${defenderActiveEffects.defBonus} (Ativa) = ${defenderTotalGrd}`);
+    
+    // Escudo Zelador (Adicionado à guarda total e consumido)
+    let currentShield = defenderSynBonuses.shield;
+    if (currentShield > 0) {
+      defenderTotalGrd += currentShield;
+      console.log(`   🧱 Escudo Ativo: +${currentShield}`);
     }
     
     // --- CÁLCULO DO PODER (POW) ---
