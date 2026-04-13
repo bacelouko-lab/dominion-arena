@@ -23,7 +23,7 @@ export default function Hand({ hand, onDragStart, onDragEnd, onDrop, onSell }) {
         background: 'rgba(10, 10, 10, 0.8)',
         border: '1px solid #333',
         borderRadius: '12px',
-        minHeight: '220px',
+        minHeight: '340px',
         display: 'flex',
         flexDirection: 'column',
         gap: '15px',

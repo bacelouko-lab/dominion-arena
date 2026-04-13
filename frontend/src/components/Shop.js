@@ -85,7 +85,7 @@ export default function Shop({ shopCards, onBuy, onReturnCard, gold, playerField
         padding: '60px 10px 40px 10px',
         WebkitOverflowScrolling: 'touch',
         scrollbarWidth: 'thin',
-        minHeight: '280px'
+        minHeight: '380px'
       }}>
         {cards.length === 0 ? (
           <div style={{ color: '#444', textAlign: 'center', width: '100%', padding: '20px', minWidth: '200px' }}>
@@ -95,7 +95,7 @@ export default function Shop({ shopCards, onBuy, onReturnCard, gold, playerField
           cards.map((card, index) => (
             <div key={card.instanceId || index} style={{ 
               textAlign: 'center', 
-              minWidth: '140px',
+              minWidth: '155px',
               flexShrink: 0,
               position: 'relative',
               zIndex: 100

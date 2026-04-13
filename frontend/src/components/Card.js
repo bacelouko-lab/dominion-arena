@@ -39,36 +39,29 @@ export default function Card({ card, onClick, onSell, isShop = false, isSynergyM
         zIndex: isZoomed ? 1000 : 1,
         cursor: 'pointer',
         pointerEvents: 'auto',
-        transition: 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-        transform: isZoomed ? 'scale(1.8) translateY(-20px)' : 'scale(1)'
+        transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+        transform: isZoomed ? 'scale(1.4) translateY(-20px)' : 'scale(1)'
       }}
     >
-      <div className="card-inner-layout" style={{ pointerEvents: 'none' }}>
+      <div className="card-inner-layout" style={{ pointerEvents: 'none', position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
         {/* TOPO: Nome e Custo */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '24px', padding: '0 2px' }}>
           <div className="card-title">
             {card.nome}
           </div>
-          <div className="card-cost-badge" style={{ 
-            background: 'radial-gradient(circle, #ffd700 0%, #b8860b 100%)',
-            width: '22px', height: '22px', borderRadius: '50%',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            border: '2px solid #000', boxShadow: '0 2px 4px rgba(0,0,0,0.5)',
-            color: '#000', fontWeight: '900', fontSize: '12px',
-            fontFamily: "'Cinzel', serif"
-          }}>
+          <div className="card-cost-badge">
             {card.custo}
           </div>
         </div>
 
         {/* MEIO: Arte */}
-        <div className="card-art-frame" style={{ position: 'relative' }}>
+        <div className="card-art-frame">
           <img 
             src={card.imagem.startsWith('http') ? card.imagem : `/assets/cards/${card.imagem}`} 
             alt={card.nome} 
             style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
             onError={(e) => {
-              e.target.src = `https://via.placeholder.com/130x100/1a1a1a/fff?text=${card.nome?.slice(0, 8)}`;
+              e.target.src = `https://via.placeholder.com/150x110/1a1a1a/fff?text=${card.nome?.slice(0, 8)}`;
             }}
           />
           {isAscendido && (
@@ -91,23 +84,23 @@ export default function Card({ card, onClick, onSell, isShop = false, isSynergyM
           </div>
         </div>
 
-        {/* INFERIOR: Dádiva */}
-        <div className="card-dadiva-box">
-          <div className="card-dadiva-label">Dádiva de Ascensão</div>
-          <div className="card-dadiva-text">
-            {card.evolucao || 'Nenhuma dádiva ativa.'}
-          </div>
-        </div>
-
-        {/* CANTOS: POW e GRD */}
+        {/* MEDALHÕES DE STATUS (DISCRETOS) */}
         <div className="stats-container">
           <div className="stat-shield pow">
-            <span style={{ fontSize: '6px', color: 'rgba(255,255,255,0.7)', fontWeight: 'bold', marginBottom: '-2px' }}>POW</span>
+            <span style={{ fontSize: '4.5px', color: '#ff4d4d', fontWeight: 'bold', marginBottom: '-2px' }}>POW</span>
             <span className="stat-value">{card.atk}</span>
           </div>
           <div className="stat-shield grd">
-            <span style={{ fontSize: '6px', color: 'rgba(255,255,255,0.7)', fontWeight: 'bold', marginBottom: '-2px' }}>GRD</span>
+            <span style={{ fontSize: '4.5px', color: '#4d94ff', fontWeight: 'bold', marginBottom: '-2px' }}>GRD</span>
             <span className="stat-value">{card.def}</span>
+          </div>
+        </div>
+
+        {/* INFERIOR: Dádiva */}
+        <div className="card-dadiva-box">
+          <div className="card-dadiva-label">Dádiva</div>
+          <div className="card-dadiva-text">
+            {card.evolucao || 'Nenhuma dádiva ativa.'}
           </div>
         </div>
 
