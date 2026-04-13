@@ -143,65 +143,43 @@ body {
 }
 
 /* Materiais por Custo */
-/* Bronze (Custo 2) - Premium */
+/* Bronze (Custo 2) - Estilo Robusto */
 .frame-bronze {
-  border: 4px solid #CD7F32;
+  border: 4px solid #8B4513;
+  background: #0a0a0a;
   box-shadow: 
-    inset 0 0 15px rgba(75, 42, 0, 0.9),
-    0 0 10px rgba(139, 69, 19, 0.4);
-  background: linear-gradient(135deg, #1a1510 0%, #2a1a00 100%);
-  border-image: linear-gradient(to bottom right, #CD7F32, #8B4513, #CD7F32) 1;
-}
-.frame-bronze::after {
-  content: ''; position: absolute; inset: 1px;
-  border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 14px;
-  pointer-events: none;
+    0 0 0 1px #CD7F32,
+    inset 0 0 15px rgba(139, 69, 19, 0.5);
 }
 
-/* Prata (Custo 3) - Premium */
+/* Prata (Custo 3) - Estilo Robusto */
 .frame-silver {
-  border: 4px solid #C0C0C0;
+  border: 4px solid #808080;
+  background: #0a0a0a;
   box-shadow: 
-    inset 0 0 15px rgba(100, 100, 100, 0.8),
-    0 0 15px rgba(255, 255, 255, 0.2);
-  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-  border-image: linear-gradient(to bottom right, #E0E0E0, #808080, #E0E0E0) 1;
-}
-.frame-silver::after {
-  content: ''; position: absolute; inset: 1px;
-  border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 14px;
-  pointer-events: none;
+    0 0 0 1px #C0C0C0,
+    inset 0 0 15px rgba(255, 255, 255, 0.1);
 }
 
-/* Ouro (Custo 5) - ESTILO PREMIUM MOCKUP */
+/* Ouro (Custo 5) - Estilo Robusto/Nobre */
 .frame-gold {
-  border: 4px solid #FFD700;
+  border: 4px solid #B8860B;
+  background: #0a0a0a;
   box-shadow: 
-    inset 0 0 15px rgba(184, 134, 11, 0.8),
-    0 0 20px rgba(255, 215, 0, 0.3);
-  background: linear-gradient(135deg, #1a1a1a 0%, #2c1e00 100%);
-  border-image: linear-gradient(to bottom right, #FFD700, #B8860B, #FFD700) 1;
-}
-.frame-gold::after {
-  content: ''; position: absolute; inset: 1px;
-  border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px;
-  pointer-events: none;
+    0 0 0 1px #FFD700,
+    0 0 20px rgba(255, 215, 0, 0.2),
+    inset 0 0 15px rgba(255, 215, 0, 0.3);
 }
 
-/* Diamante (Custo 8) - Premium */
+/* Diamante (Custo 8) - Estilo Robusto/Épico */
 .frame-diamond {
-  border: 4px solid #B9F2FF;
+  border: 4px solid #00d2ff;
+  background: #000;
   box-shadow: 
-    inset 0 0 25px rgba(0, 210, 255, 0.5),
-    0 0 20px rgba(185, 242, 255, 0.4);
-  background: radial-gradient(circle at center, #0a1a1a 0%, #000000 100%);
-  border-image: linear-gradient(to bottom right, #B9F2FF, #00d2ff, #B9F2FF) 1;
+    0 0 0 1px #B9F2FF,
+    0 0 25px rgba(0, 210, 255, 0.4),
+    inset 0 0 20px rgba(185, 242, 255, 0.2);
   animation: diamond-shimmer 4s infinite linear;
-}
-.frame-diamond::after {
-  content: ''; position: absolute; inset: 1px;
-  border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 14px;
-  pointer-events: none;
 }
 
 @keyframes diamond-shimmer {
@@ -299,11 +277,11 @@ body {
 }
 
 .card-dadiva-text {
-  font-family: 'Cinzel', serif;
-  font-size: 8.5px;
+  font-size: 8px; /* Reduzido levemente */
   color: #e0e0e0;
-  line-height: 1.2;
+  line-height: 1.1;
   font-weight: 500;
+  padding: 0 2px;
 }
 
 /* ÍCONES DE STATUS (CANTOS) */

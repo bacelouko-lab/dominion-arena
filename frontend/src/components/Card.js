@@ -46,10 +46,10 @@ export default function Card({ card, onClick, onSell, isShop = false, isSynergyM
       <div className="card-inner-layout" style={{ pointerEvents: 'none', position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
         {/* TOPO: Nome e Custo */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '24px', padding: '0 2px' }}>
-          <div className="card-title">
+          <div className="card-title" style={{ flex: 1, marginRight: '8px' }}>
             {card.nome}
           </div>
-          <div className="card-cost-badge">
+          <div className="card-cost-badge" style={{ flexShrink: 0 }}>
             {card.custo}
           </div>
         </div>
@@ -76,9 +76,9 @@ export default function Card({ card, onClick, onSell, isShop = false, isSynergyM
             </div>
           )}
           <div style={{
-            position: 'absolute', bottom: '2px', right: '4px',
-            fontSize: '7px', color: '#ffd700', textTransform: 'uppercase',
-            fontWeight: 'bold', textShadow: '0 1px 2px #000', opacity: 0.9
+            position: 'absolute', top: '2px', right: '4px',
+            fontSize: '7px', color: 'rgba(255, 215, 0, 0.8)', textTransform: 'uppercase',
+            fontWeight: 'bold', textShadow: '0 1px 2px #000', zIndex: 5
           }}>
             {card.regiao}
           </div>
