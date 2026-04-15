@@ -233,6 +233,42 @@ function emitLogs(gameId, game) {
   }
 }
 
+async function checkGameEnd(gameId, game) {
+  const alivePlayers = Object.values(game.players).filter(p => p.life > 0);
+  if (alivePlayers.length <= 1 && game.phase !== 'end') {
+    console.log(`🏆 FIM DE JOGO DETECTADO em ${gameId}!`);
+    const winner = alivePlayers[0];
+    if (!winner) return true; // Caso raro onde todos morreram
+
+    game.phase = 'end';
+    const finalRanking = [winner.playerId, ...[...game.eliminations].reverse()];
+    
+    try {
+      await saveMatch(game, finalRanking);
+    } catch (err) {
+      console.error('❌ Erro ao salvar partida (checkGameEnd):', err);
+    }
+
+    io.to(gameId).emit('game-over', { 
+      winner: { playerId: winner.playerId, username: winner.username }, 
+      ranking: finalRanking.map(id => ({ 
+        playerId: id, 
+        username: game.players[id]?.username 
+      }))
+    });
+    
+    // Agendar limpeza
+    setTimeout(() => {
+      if (games.has(gameId)) {
+        games.delete(gameId);
+        readyPlayersMap.delete(gameId);
+      }
+    }, 120000);
+    return true;
+  }
+  return false;
+}
+
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
 
@@ -322,9 +358,26 @@ io.on('connection', (socket) => {
     if (result.error) socket.emit('error', result.error);
     else {
       emitLogs(socket.gameId, game);
-      io.to(socket.gameId).emit('dice-rolled', { playerId: socket.playerId, ...result });
-      game.phase = 'shop_decision';
-      io.to(socket.gameId).emit('phase-changed', { phase: 'shop_decision', turn: game.turn, nextPlayerId: socket.playerId });
+      if (result.dead) {
+        io.to(socket.gameId).emit('player-eliminated', { 
+          playerId: socket.playerId, 
+          username: currentPlayer.username 
+        });
+        
+        checkGameEnd(socket.gameId, game).then(ended => {
+          if (!ended) {
+            // Se morreu mas o jogo continua, passa o turno automaticamente
+            const turnResult = game.endCurrentTurn();
+            io.to(socket.gameId).emit('game-state', game.getGameState());
+            io.to(socket.gameId).emit('turn-ended', turnResult);
+            io.to(socket.gameId).emit('phase-changed', { phase: 'roll', turn: turnResult.turn, nextPlayerId: turnResult.nextPlayerId });
+          }
+        });
+      } else {
+        io.to(socket.gameId).emit('dice-rolled', { playerId: socket.playerId, ...result });
+        game.phase = 'shop_decision';
+        io.to(socket.gameId).emit('phase-changed', { phase: 'shop_decision', turn: game.turn, nextPlayerId: socket.playerId });
+      }
     }
   });
 
@@ -516,50 +569,16 @@ io.on('connection', (socket) => {
     
     // Verifica se o defensor morreu
     if (defender.life <= 0) {
-      console.log(`💀 Jogador morreu! ${defender.username} vida: ${defender.life}`);
+      console.log(`💀 Jogador morreu em combate! ${defender.username}`);
       game.recordElimination(defender.playerId);
       
-      const alivePlayers = Object.values(game.players).filter(p => p.life > 0);
-      console.log(`👥 Jogadores vivos: ${alivePlayers.length}`);
-      
-      if (alivePlayers.length <= 1) {
-        console.log(`🏆 FIM DE JOGO DETECTADO!`);
-        const winner = alivePlayers[0];
-        game.phase = 'end'; // Proteção contra sessões zumbi
-        
-        // Gerar Ranking Final: [Vencedor, ...Quem morreu por último, ..., Quem morreu primeiro]
-        const finalRanking = [winner.playerId, ...[...game.eliminations].reverse()];
-        
-        try {
-          await saveMatch(game, finalRanking);
-        } catch (err) {
-          console.error('❌ Erro ao salvar partida:', err);
-        }
-        io.to(socket.gameId).emit('game-over', { 
-          winner: { playerId: winner.playerId, username: winner.username }, 
-          ranking: finalRanking.map(id => ({ 
-            playerId: id, 
-            username: game.players[id]?.username 
-          }))
-        });
-        
-        // Limpa o jogo da memória após 2 minutos para dar tempo dos jogadores verem a tela de fim
-        const finalGameId = socket.gameId;
-        setTimeout(() => {
-          if (games.has(finalGameId)) {
-            console.log(`🧹 Limpeza: Removendo jogo finalizado ${finalGameId} da memória.`);
-            games.delete(finalGameId);
-            readyPlayersMap.delete(finalGameId);
-          }
-        }, 120000); 
-        return;
-      } else {
-        console.log(`⚠️ Jogador eliminado, mas jogo continua. Vivos: ${alivePlayers.length}`);
-        io.to(socket.gameId).emit('player-eliminated', { 
-          playerId: defender.playerId, 
-          username: defender.username 
-        });
-      }
+      const ended = await checkGameEnd(socket.gameId, game);
+      if (ended) return; // Fim de jogo já tratado em checkGameEnd
+
+      io.to(socket.gameId).emit('player-eliminated', { 
+        playerId: defender.playerId, 
+        username: defender.username 
+      });
     }
     
     setTimeout(() => {

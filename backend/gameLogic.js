@@ -66,6 +66,7 @@ class GameLogic {
       anjoGovernanteSpent: 0,
       freeCardUsed: false,
       consecutiveSaves: 0,
+      burnSources: [],
       // Status temporários de combate (resetados a cada apply)
       immuneDirect: false,
       reflect: 0,
@@ -202,11 +203,20 @@ class GameLogic {
     if (!player) return { error: 'Player not found' };
     this.calculateSynergies(playerId);
     const bonuses = this.applySynergyBonuses(player);
-    if (player.savedPoints >= 4) player.savedPoints = 0;
-    if (player.burnStacks > 0) {
-      player.life = Math.max(0, player.life - player.burnStacks);
-      this.addLog(`🔥 Queimadura: ${player.username} sofreu ${player.burnStacks} de dano | Vida: ${player.life}`);
+    
+    // Calcular dano de queimação baseado em fontes únicas
+    const burnDamage = player.burnSources ? player.burnSources.length : 0;
+    if (burnDamage > 0) {
+      player.life = Math.max(0, player.life - burnDamage);
+      this.addLog(`🔥 Queimadura: ${player.username} sofreu ${burnDamage} de dano | Vida: ${player.life}`);
+      
+      if (player.life <= 0) {
+        this.addLog(`💀 ${player.username} foi consumido pelas chamas!`);
+        this.recordElimination(playerId);
+        return { dead: true, rolls: [], totalGold: 0, diceCount: 0 };
+      }
     }
+
     if (bonuses.wisdomBonus) {
       // O Erudito Nv2 agora dá bônus passivos (pow, grd, ouro), wisdomBonus fica legado ou removido
     }
@@ -232,7 +242,16 @@ class GameLogic {
     } else {
       this.addLog(`🎲 Dados: ${player.username} rolou [${rolls.join(', ')}] | Total: ${totalGold}`);
     }
-    if (diceCount >= 2 && player.consecutiveSaves >= 2) player.consecutiveSaves = 0;
+
+    // Consumo de Bônus (apenas se não houver sinergia travando o dado em valor fixo)
+    if (!bonuses.fixedDice) {
+      if (player.savedPoints >= 4) {
+        player.savedPoints -= 4;
+      } else if (player.consecutiveSaves >= 2) {
+        player.consecutiveSaves = 0;
+      }
+    }
+    
     return { totalGold, rolls, diceCount, savedPoints: player.savedPoints };
   }
 
@@ -474,18 +493,22 @@ class GameLogic {
     }
     return bonuses;
   }
-
   applyActiveAbilities(attacker, defender) {
     let d = 0, h = 0, p = 0, g = 0, b = 0, immune = false, refl = 0;
+    const sources = [];
     this.resetStatus(attacker);
     this.resetStatus(defender);
     attacker.field.filter(c => c && c.isEvolved).forEach(c => {
       const r = this.applySingleCardAbility(attacker, c, defender);
-      d += r.direct || 0; h += r.healing || 0; p += r.pow || 0; g += r.grd || 0; b += r.burn || 0;
+      d += r.direct || 0; h += r.healing || 0; p += r.pow || 0; g += r.grd || 0;
+      if (r.burn) {
+        b += r.burn;
+        sources.push(c.id);
+      }
       if (r.immuneDirect) immune = true;
       if (r.reflect) refl = Math.max(refl, r.reflect);
     });
-    return { direct: d, healing: h, pow: p, grd: g, burn: b, immuneDirect: immune, reflect: refl };
+    return { direct: d, healing: h, pow: p, grd: g, burn: b, burnSources: sources, immuneDirect: immune, reflect: refl };
   }
 
   applySingleCardAbility(player, card, opp = null) {
@@ -586,9 +609,14 @@ class GameLogic {
       attacker.life = Math.max(0, attacker.life - refDmg);
       this.addLog(`🛡️ Reflexão: ${attacker.username} sofreu ${refDmg} de dano de reflexão de ${defender.username}!`);
     }
-    if (aA.burn) {
-      defender.burnStacks = (defender.burnStacks || 0) + aA.burn;
-      this.addLog(`🔥 Queimadura: ${attacker.username} aplicou +${aA.burn} stacks em ${defender.username}`);
+    if (aA.burnSources && aA.burnSources.length > 0) {
+      if (!defender.burnSources) defender.burnSources = [];
+      aA.burnSources.forEach(id => {
+        if (!defender.burnSources.includes(id)) {
+          defender.burnSources.push(id);
+          this.addLog(`🔥 Queimadura: ${attacker.username} aplicou nova fonte (ID:${id}) em ${defender.username}`);
+        }
+      });
     }
     if (aA.healing > 0) {
       const oldL = attacker.life;
