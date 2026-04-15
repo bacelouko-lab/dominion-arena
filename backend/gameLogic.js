@@ -202,8 +202,6 @@ class GameLogic {
     if (!player) return { error: 'Player not found' };
     this.calculateSynergies(playerId);
     const bonuses = this.applySynergyBonuses(player);
-    const diceCount = bonuses.dice || this.calculateDiceCount(player);
-    player.dice = diceCount;
     if (player.savedPoints >= 4) player.savedPoints = 0;
     if (player.burnStacks > 0) {
       player.life = Math.max(0, player.life - player.burnStacks);
