@@ -49,7 +49,7 @@ class GameLogic {
     this.players[playerId] = {
       playerId,
       username,
-      life: 20,
+      life: 25,
       gold: 0,
       dice: 1,
       diceRolls: [],
@@ -599,7 +599,7 @@ class GameLogic {
     let total = dmg + dir;
     if (total <= 0) total = 1; // Dano mínimo para evitar partidas infinitas
     if (dS.limit && total > dS.limit) total = dS.limit;
-    if (attacker.exec && defender.life <= Math.ceil(20 * 0.2)) total = defender.life;
+    if (attacker.exec && defender.life <= Math.ceil(25 * 0.2)) total = defender.life;
     const old = defender.life;
     defender.life = Math.max(0, defender.life - total);
     const actual = old - defender.life;
@@ -620,13 +620,13 @@ class GameLogic {
     }
     if (aA.healing > 0) {
       const oldL = attacker.life;
-      const maxL = (aS.life ? 20 + aS.life : 20);
+      const maxL = (aS.life ? 25 + aS.life : 25);
       attacker.life = Math.min(maxL, attacker.life + aA.healing);
       this.addLog(`➕ Cura Ativa: ${attacker.username} curou ${attacker.life - oldL} | Vida: ${attacker.life}`);
     }
     if (dA.healing > 0) {
       const oldL = defender.life;
-      const maxL = (dS.life ? 20 + dS.life : 20);
+      const maxL = (dS.life ? 25 + dS.life : 25);
       defender.life = Math.min(maxL, defender.life + dA.healing);
       this.addLog(`➕ Cura Ativa: ${defender.username} curou ${defender.life - oldL} | Vida: ${defender.life}`);
     }
