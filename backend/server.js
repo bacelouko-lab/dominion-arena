@@ -226,6 +226,13 @@ async function saveMatch(game, ranking) {
   }
 }
 
+function emitLogs(gameId, game) {
+  if (game.logs && game.logs.length > 0) {
+    io.to(gameId).emit('battle-logs', game.logs);
+    game.logs = [];
+  }
+}
+
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
 
@@ -314,6 +321,7 @@ io.on('connection', (socket) => {
     const result = game.rollDice(socket.playerId);
     if (result.error) socket.emit('error', result.error);
     else {
+      emitLogs(socket.gameId, game);
       io.to(socket.gameId).emit('dice-rolled', { playerId: socket.playerId, ...result });
       game.phase = 'shop_decision';
       io.to(socket.gameId).emit('phase-changed', { phase: 'shop_decision', turn: game.turn, nextPlayerId: socket.playerId });
@@ -380,7 +388,10 @@ io.on('connection', (socket) => {
 
     const result = game.buyCard(socket.playerId, cardInstanceId);
     if (result.error) socket.emit('buy-error', result.error);
-    else io.to(socket.gameId).emit('card-bought', { playerId: socket.playerId, hand: result.hand, gold: result.gold, shop: game.shop });
+    else {
+      emitLogs(socket.gameId, game);
+      io.to(socket.gameId).emit('card-bought', { playerId: socket.playerId, hand: result.hand, gold: result.gold, shop: game.shop });
+    }
   });
 
 
@@ -429,6 +440,7 @@ io.on('connection', (socket) => {
     if (result.error) {
       socket.emit('error', result.error);
     } else {
+      emitLogs(socket.gameId, game);
       io.to(socket.gameId).emit('game-state', game.getGameState());
     }
   });
@@ -493,6 +505,7 @@ io.on('connection', (socket) => {
     }
     
     const combatResult = game.calculateCombat(attacker, defender);
+    emitLogs(socket.gameId, game);
     
     io.to(socket.gameId).emit('combat-resolved', {
       attacker: combatResult.attacker,

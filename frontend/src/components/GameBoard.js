@@ -7,6 +7,7 @@ import Field from './Field';
 import GamePhase from './GamePhase';
 import Synergies from './Synergies';
 import Opponents from './Opponents';
+import BattleLog from './BattleLog';
 import soundManager from '../lib/soundManager';
 
 export default function GameBoard({ gameState, gameId, username }) {
@@ -815,7 +816,9 @@ export default function GameBoard({ gameState, gameId, username }) {
         }
       `}</style>
 
-     </div>
+      </div>
+
+      <BattleLog gameId={gameId} />
     </div>
    </div>
   );

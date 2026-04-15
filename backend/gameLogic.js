@@ -15,6 +15,12 @@ class GameLogic {
     this.pool = this.initializePool();
     this.shufflePool();
     this.isPublic = false;
+    this.logs = [];
+  }
+
+  addLog(msg) {
+    console.log(msg);
+    this.logs.push(msg);
   }
 
   shufflePool() {
@@ -178,7 +184,7 @@ class GameLogic {
         const oldLife = player.life;
         const maxL = bonuses.life ? 20 + bonuses.life : 20;
         player.life = Math.min(maxL, player.life + finalHeal);
-        console.log(`🌿 Cura Veridian: ${player.username} curou ${player.life - oldLife} de vida | Vida: ${player.life}`);
+        this.addLog(`🌿 Cura Veridian: ${player.username} curou ${player.life - oldLife} de vida | Vida: ${player.life}`);
       }
     }
     if (synergies.classes?.['Zelador'] >= 4) {
@@ -186,7 +192,7 @@ class GameLogic {
       const maxL = bonuses.life ? 20 + bonuses.life : 20;
       player.life = maxL;
       if (player.life > oldLife) {
-        console.log(`✨ Cura Zelador: ${player.username} restaurou vida máxima | Vida: ${player.life}`);
+        this.addLog(`✨ Cura Zelador: ${player.username} restaurou vida máxima | Vida: ${player.life}`);
       }
     }
   }
@@ -201,7 +207,7 @@ class GameLogic {
     if (player.savedPoints >= 4) player.savedPoints = 0;
     if (player.burnStacks > 0) {
       player.life = Math.max(0, player.life - player.burnStacks);
-      console.log(`🔥 Queimadura: ${player.username} sofreu ${player.burnStacks} de dano | Vida: ${player.life}`);
+      this.addLog(`🔥 Queimadura: ${player.username} sofreu ${player.burnStacks} de dano | Vida: ${player.life}`);
     }
     if (bonuses.wisdomBonus) {
       const eruditos = player.field.filter(c => c && c.classe === 'Erudito' && c.isEvolved);
@@ -223,7 +229,7 @@ class GameLogic {
     }
     player.diceRolls = rolls;
     player.gold = totalGold;
-    console.log(`🎲 Dados: ${player.username} rolou [${rolls.join(', ')}] | Ouro Total: ${totalGold}`);
+    this.addLog(`🎲 Dados: ${player.username} rolou [${rolls.join(', ')}] | Ouro Total: ${totalGold}`);
     if (diceCount >= 2 && player.consecutiveSaves >= 2) player.consecutiveSaves = 0;
     return { totalGold, rolls, diceCount, savedPoints: player.savedPoints };
   }
@@ -309,7 +315,7 @@ class GameLogic {
     if (player.gold < card.custo || player.hand.length >= 7) return { error: 'Cannot buy' };
     player.gold -= card.custo;
     player.hand.push({ ...card, purchasePrice: card.custo });
-    console.log(`🛒 Compra: ${player.username} comprou ${card.nome} por ${card.custo} ouro.`);
+    this.addLog(`🛒 Compra: ${player.username} comprou ${card.nome} por ${card.custo} ouro.`);
     this.shop.splice(shopCardIndex, 1);
     this.checkEvolution(playerId);
     return { success: true, hand: player.hand, gold: player.gold };
@@ -366,7 +372,7 @@ class GameLogic {
           });
           if (targetPos.t === 'field') player.field[targetPos.i] = ev;
           else player.hand.push(ev);
-          console.log(`✨ Evolução: ${player.username} fundiu duas cópias de ${base.nome} em ${ev.nome}!`);
+          this.addLog(`✨ Evolução: ${player.username} fundiu duas cópias de ${base.nome} em ${ev.nome}!`);
           evolved = true;
           break;
         }
@@ -564,32 +570,36 @@ class GameLogic {
     defender.life = Math.max(0, defender.life - total);
     const actual = old - defender.life;
     const ref = (dS.reflect || 0) + (defender.reflect || 0) + (dA.reflect || 0) + (dS.transBonus ? 0.03 : 0);
-    if (ref > 0 && actual > 0) attacker.life = Math.max(0, attacker.life - Math.ceil(actual * ref));
+    if (ref > 0 && actual > 0) {
+      const refDmg = Math.ceil(actual * ref);
+      attacker.life = Math.max(0, attacker.life - refDmg);
+      this.addLog(`🛡️ Reflexão: ${attacker.username} sofreu ${refDmg} de dano de reflexão de ${defender.username}!`);
+    }
     if (aA.burn) {
       defender.burnStacks = (defender.burnStacks || 0) + aA.burn;
-      console.log(`🔥 Queimadura: ${attacker.username} aplicou +${aA.burn} stacks em ${defender.username}`);
+      this.addLog(`🔥 Queimadura: ${attacker.username} aplicou +${aA.burn} stacks em ${defender.username}`);
     }
     if (aA.healing > 0) {
       const oldL = attacker.life;
       const maxL = (aS.life ? 20 + aS.life : 20);
       attacker.life = Math.min(maxL, attacker.life + aA.healing);
-      console.log(`➕ Cura Ativa: ${attacker.username} curou ${attacker.life - oldL} | Vida: ${attacker.life}`);
+      this.addLog(`➕ Cura Ativa: ${attacker.username} curou ${attacker.life - oldL} | Vida: ${attacker.life}`);
     }
     if (dA.healing > 0) {
       const oldL = defender.life;
       const maxL = (dS.life ? 20 + dS.life : 20);
       defender.life = Math.min(maxL, defender.life + dA.healing);
-      console.log(`➕ Cura Ativa: ${defender.username} curou ${defender.life - oldL} | Vida: ${defender.life}`);
+      this.addLog(`➕ Cura Ativa: ${defender.username} curou ${defender.life - oldL} | Vida: ${defender.life}`);
     }
     if (aS.kill > 0 && Math.random() < aS.kill) {
       const idxArr = defender.field.map((c,i)=>c?i:null).filter(v=>v!==null);
       if(idxArr.length) {
         const targetIdx = idxArr[Math.floor(Math.random()*idxArr.length)];
-        console.log(`⚔️ Abate: ${attacker.username} destruiu a carta ${defender.field[targetIdx].nome} de ${defender.username}!`);
+        this.addLog(`⚔️ Abate: ${attacker.username} destruiu a carta ${defender.field[targetIdx].nome} de ${defender.username}!`);
         defender.field[targetIdx] = null;
       }
     }
-    console.log(`⚔️ Combate: ${attacker.username} vs ${defender.username} | Dano: ${total} (P:${aP} vs G:${dG}) | Vida ${defender.username}: ${old} -> ${defender.life}`);
+    this.addLog(`⚔️ Combate: ${attacker.username} vs ${defender.username} | Dano: ${total} (P:${aP} vs G:${dG}) | Vida ${defender.username}: ${old} -> ${defender.life}`);
     return { attacker, defender, actualDamage: actual, netDamage: actual };
   }
 }
