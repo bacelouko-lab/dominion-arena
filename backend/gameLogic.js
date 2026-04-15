@@ -210,13 +210,13 @@ class GameLogic {
       this.addLog(`🔥 Queimadura: ${player.username} sofreu ${player.burnStacks} de dano | Vida: ${player.life}`);
     }
     if (bonuses.wisdomBonus) {
-      const eruditos = player.field.filter(c => c && c.classe === 'Erudito' && c.isEvolved);
-      if (eruditos.length > 0) {
-        this.applySingleCardAbility(player, eruditos[Math.floor(Math.random() * eruditos.length)]);
-      }
+      // O Erudito Nv2 agora dá bônus passivos (pow, grd, ouro), wisdomBonus fica legado ou removido
     }
-    let totalGold = 0;
+    let totalGold = bonuses.bonusGold || 0;
     const rolls = [];
+    const diceCount = bonuses.fixedDice || bonuses.dice || this.calculateDiceCount(player);
+    player.dice = diceCount;
+
     for (let i = 0; i < diceCount; i++) {
       let roll;
       if (bonuses.six) { roll = 6; } 
@@ -229,7 +229,11 @@ class GameLogic {
     }
     player.diceRolls = rolls;
     player.gold = totalGold;
-    this.addLog(`🎲 Dados: ${player.username} rolou [${rolls.join(', ')}] | Ouro Total: ${totalGold}`);
+    if (bonuses.bonusGold > 0) {
+      this.addLog(`🎲 Dados: ${player.username} rolou [${rolls.join(', ')}] +${bonuses.bonusGold} Ouro Bônus | Total: ${totalGold}`);
+    } else {
+      this.addLog(`🎲 Dados: ${player.username} rolou [${rolls.join(', ')}] | Total: ${totalGold}`);
+    }
     if (diceCount >= 2 && player.consecutiveSaves >= 2) player.consecutiveSaves = 0;
     return { totalGold, rolls, diceCount, savedPoints: player.savedPoints };
   }
@@ -414,11 +418,11 @@ class GameLogic {
 
   getRegionBonus(region, level) {
     const b = {
-      Solari: { 2: { pow: 4 }, 4: { direct: 4 }, 5: { multi: 2 } },
-      Gladius: { 2: { grd: 4 }, 4: { reflect: 0.4 }, 5: { limit: 5 } },
-      Aether: { 2: { gold: 2 }, 4: { rolls: 2 }, 5: { six: true, dice: 2 } },
+      Solari: { 3: { pow: 4 }, 4: { direct: 4 }, 5: { multi: 2 } },
+      Gladius: { 3: { grd: 4 }, 4: { reflect: 0.4 }, 5: { limit: 5 } },
+      Aether: { 3: { bonusGold: 2 }, 4: { fixedDice: 2 }, 5: { six: true } },
       Veridian: { 3: { heal: 3 }, 4: { life: 10 }, 5: { double: true } },
-      Umbra: { 2: { pow: 2, grd: 2 }, 4: { kill: 0.3 }, 5: { disable: true } }
+      Umbra: { 3: { pow: 2, grd: 2 }, 4: { kill: 0.3 }, 5: { disable: true } }
     };
     return b[region]?.[level] || {};
   }
@@ -426,9 +430,9 @@ class GameLogic {
   applySynergyBonuses(player, opponent = null) {
     const s = player.synergies || { regions: {}, classes: {} };
     if (opponent && opponent.synergies?.regions?.['Umbra'] >= 5) return { powBonus: 0, grdBonus: 0, multi: 1 };
-    let bonuses = { powBonus: 0, grdBonus: 0, direct: 0, multi: 1, reflect: 0, limit: 0, gold: 0, heal: 0, life: 0, double: false, dice: 0, six: false, kill: 0, grdPlus: 0, powPlus: 0, immuneDirect: false, crit: 0, transBonus: 0, fullHeal: false, wisdomBonus: false };
+    let bonuses = { powBonus: 0, grdBonus: 0, direct: 0, multi: 1, reflect: 0, limit: 0, gold: 0, heal: 0, life: 0, double: false, dice: 0, six: false, kill: 0, grdPlus: 0, powPlus: 0, immuneDirect: false, crit: 0, transBonus: 0, fullHeal: false, wisdomBonus: false, bonusGold: 0, fixedDice: 0 };
     for (const [r, c] of Object.entries(s.regions)) {
-      [2, 3, 4, 5].forEach(lv => {
+      [3, 4, 5].forEach(lv => {
         if (c >= lv) {
           const b = this.getRegionBonus(r, lv);
           if (b.pow) bonuses.powBonus += b.pow;
@@ -444,6 +448,8 @@ class GameLogic {
           if (b.dice) bonuses.dice = b.dice;
           if (b.six) bonuses.six = true;
           if (b.kill) bonuses.kill = b.kill;
+          if (b.bonusGold) bonuses.bonusGold += b.bonusGold;
+          if (b.fixedDice) bonuses.fixedDice = b.fixedDice;
         }
       });
     }
@@ -451,13 +457,20 @@ class GameLogic {
       if (c >= 2) {
         if (cls === 'Vanguarda') bonuses.grdPlus += 5;
         if (cls === 'Algoz') bonuses.powPlus += 5;
-        if (cls === 'Erudito') bonuses.wisdomBonus = true;
+        if (cls === 'Erudito') {
+          bonuses.powPlus += 1;
+          bonuses.grdPlus += 1;
+          bonuses.bonusGold += 1;
+        }
         if (cls === 'Zelador') { if(Math.random()<0.5) bonuses.powPlus+=2; else bonuses.heal+=2; }
       }
       if (c >= 4) {
         if (cls === 'Vanguarda') bonuses.immuneDirect = true;
         if (cls === 'Algoz') bonuses.crit = 0.3;
-        if (cls === 'Erudito') bonuses.transBonus = 3;
+        if (cls === 'Erudito') {
+          bonuses.reflect += 0.1;
+          bonuses.crit += 0.1;
+        }
         if (cls === 'Zelador') bonuses.fullHeal = true;
       }
     }

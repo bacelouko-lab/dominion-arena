@@ -2,48 +2,48 @@ import React from 'react';
 
 const regionData = [
   { name: 'Solari', levels: [
-    { threshold: 2, desc: 'Poder (POW) +2 para todos Solari' },
-    { threshold: 4, desc: 'Invocador do Sol: +4 POW adicional' },
-    { threshold: 5, desc: 'Ascensão Total: POW x1.5 para a equipe' }
+    { threshold: 3, desc: 'Poder (POW) +4 para todos' },
+    { threshold: 4, desc: 'Dano Sagrado: +4 de Dano Direto' },
+    { threshold: 5, desc: 'Supernova: Multiplica o dano final por 2' }
   ]},
   { name: 'Gladius', levels: [
-    { threshold: 2, desc: 'Guarda (GRD) +2 para todos Gladius' },
-    { threshold: 4, desc: 'Aparada: Ignora 2 de dano recebido' },
-    { threshold: 5, desc: 'Retaliação: Reflete 50% do dano na Guarda' }
+    { threshold: 3, desc: 'Fortaleza: Guarda (GRD) +4' },
+    { threshold: 4, desc: 'Reflexo Real: Reflete 40% do dano sofrido' },
+    { threshold: 5, desc: 'Indestrutível: Dano máximo recebido limitado a 5' }
   ]},
   { name: 'Aether', levels: [
-    { threshold: 2, desc: 'Mágica: +1 dado de ouro' },
-    { threshold: 4, desc: 'Economia: 1 carta grátis por turno' },
-    { threshold: 5, desc: 'Transcendência: Todos os dados revelam 6' }
+    { threshold: 3, desc: 'Tesouro: +2 de Ouro bônus por turno' },
+    { threshold: 4, desc: 'Foco Arcano: Fixa em 2 dados para rolar' },
+    { threshold: 5, desc: 'Perfeição: Todos os dados revelam 6' }
   ]},
   { name: 'Veridian', levels: [
-    { threshold: 2, desc: 'Cura: Recupera 2 de vida ao fim do turno' },
-    { threshold: 4, desc: 'Simbiose: Transfere 2 POW para o aliado mais forte' },
-    { threshold: 5, desc: 'Vitalidade: Vida Máxima +5' }
+    { threshold: 3, desc: 'Regeneração: Cura +3 de vida por turno' },
+    { threshold: 4, desc: 'Super-Vida: Vida Máxima +10' },
+    { threshold: 5, desc: 'Vitalidade Profunda: Dobra efeitos de cura' }
   ]},
   { name: 'Umbra', levels: [
-    { threshold: 2, desc: 'Penumbra: Ignora 2 de GRD do oponente' },
-    { threshold: 4, desc: 'Execução: Derrota inimigos com menos de 3 vida' },
-    { threshold: 5, desc: 'Lâmina Maldita: Dano causado ignora escudos' }
+    { threshold: 3, desc: 'Escuridão: POW +2 e GRD +2' },
+    { threshold: 4, desc: 'Abate: 30% de chance de destruir carta inimiga' },
+    { threshold: 5, desc: 'Vazio: Desativa bônus de sinergia do oponente' }
   ]}
 ];
 
 const classData = [
   { name: 'Vanguarda', levels: [
-    { threshold: 2, desc: 'Muralha: Guarda +3' },
-    { threshold: 4, desc: 'Invulnerável: Bloqueia o primeiro ataque do round' }
+    { threshold: 2, desc: 'Muralha: Guarda +5' },
+    { threshold: 4, desc: 'Invulnerável: Imune a Dano Direto' }
   ]},
   { name: 'Algoz', levels: [
-    { threshold: 2, desc: 'Foco: Poder +4' },
-    { threshold: 4, desc: 'Crítico: 20% de causar dano dobrado' }
+    { threshold: 2, desc: 'Foco: Poder +5' },
+    { threshold: 4, desc: 'Crítico: 30% de causar dano dobrado' }
   ]},
   { name: 'Erudito', levels: [
-    { threshold: 2, desc: 'Perspicácia: Custo de todas as cartas -2' },
-    { threshold: 4, desc: 'Gênio: Cartas custam -4' }
+    { threshold: 2, desc: 'Iniciação: +1 POW, +1 GRD e +1 Ouro por turno' },
+    { threshold: 4, desc: 'Iluminação: +10% de Reflexão e +10% de Crítico' }
   ]},
   { name: 'Zelador', levels: [
-    { threshold: 2, desc: 'Suporte: Cura 2 de vida ao fim do turno' },
-    { threshold: 4, desc: 'Bênção: Cura 3 de vida adicional' }
+    { threshold: 2, desc: 'Sorte: 50% chance de +2 POW ou +2 cura' },
+    { threshold: 4, desc: 'Milagre: Restaura vida máxima após combate' }
   ]}
 ];
 
