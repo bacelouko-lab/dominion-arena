@@ -216,7 +216,7 @@ class GameLogic {
     player.diceRolls = rolls;
     player.gold = totalGold;
     if (diceCount >= 2 && player.consecutiveSaves >= 2) player.consecutiveSaves = 0;
-    return { gold: totalGold, rolls, diceCount, savedPoints: player.savedPoints };
+    return { totalGold, rolls, diceCount, savedPoints: player.savedPoints };
   }
 
   rerollDice(playerId) {

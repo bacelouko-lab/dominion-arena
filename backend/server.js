@@ -357,7 +357,7 @@ io.on('connection', (socket) => {
     const result = game.chooseShopOption(socket.playerId, choseShop);
     if (result.error) socket.emit('error', result.error);
     else {
-      io.to(socket.gameId).emit('shop-option-chosen', { playerId: socket.playerId, ...result });
+      io.to(socket.gameId).emit('shop-option-chosen', { playerId: socket.playerId, ...result, shop: game.shop });
       io.to(socket.gameId).emit('phase-changed', { phase: result.phase, nextPlayerId: socket.playerId });
     }
   });
