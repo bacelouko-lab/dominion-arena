@@ -174,12 +174,20 @@ class GameLogic {
       const healBase = bonuses.heal || 0;
       const multiplier = bonuses.double ? 2 : 1;
       const finalHeal = Math.ceil(healBase * multiplier);
-      const maxL = bonuses.life ? 20 + bonuses.life : 20;
-      player.life = Math.min(maxL, player.life + finalHeal);
+      if (finalHeal > 0) {
+        const oldLife = player.life;
+        const maxL = bonuses.life ? 20 + bonuses.life : 20;
+        player.life = Math.min(maxL, player.life + finalHeal);
+        console.log(`🌿 Cura Veridian: ${player.username} curou ${player.life - oldLife} de vida | Vida: ${player.life}`);
+      }
     }
     if (synergies.classes?.['Zelador'] >= 4) {
+      const oldLife = player.life;
       const maxL = bonuses.life ? 20 + bonuses.life : 20;
       player.life = maxL;
+      if (player.life > oldLife) {
+        console.log(`✨ Cura Zelador: ${player.username} restaurou vida máxima | Vida: ${player.life}`);
+      }
     }
   }
 
@@ -193,7 +201,7 @@ class GameLogic {
     if (player.savedPoints >= 4) player.savedPoints = 0;
     if (player.burnStacks > 0) {
       player.life = Math.max(0, player.life - player.burnStacks);
-      console.log(`🔥 Queimadura: ${player.username} sofreu ${player.burnStacks} de dano.`);
+      console.log(`🔥 Queimadura: ${player.username} sofreu ${player.burnStacks} de dano | Vida: ${player.life}`);
     }
     if (bonuses.wisdomBonus) {
       const eruditos = player.field.filter(c => c && c.classe === 'Erudito' && c.isEvolved);
@@ -552,10 +560,29 @@ class GameLogic {
     const actual = old - defender.life;
     const ref = (dS.reflect || 0) + (defender.reflect || 0) + (dA.reflect || 0) + (dS.transBonus ? 0.03 : 0);
     if (ref > 0 && actual > 0) attacker.life = Math.max(0, attacker.life - Math.ceil(actual * ref));
-    if (aA.burn) defender.burnStacks = (defender.burnStacks || 0) + aA.burn;
+    if (aA.burn) {
+      defender.burnStacks = (defender.burnStacks || 0) + aA.burn;
+      console.log(`🔥 Queimadura: ${attacker.username} aplicou +${aA.burn} stacks em ${defender.username}`);
+    }
+    if (aA.healing > 0) {
+      const oldL = attacker.life;
+      const maxL = (aS.life ? 20 + aS.life : 20);
+      attacker.life = Math.min(maxL, attacker.life + aA.healing);
+      console.log(`➕ Cura Ativa: ${attacker.username} curou ${attacker.life - oldL} | Vida: ${attacker.life}`);
+    }
+    if (dA.healing > 0) {
+      const oldL = defender.life;
+      const maxL = (dS.life ? 20 + dS.life : 20);
+      defender.life = Math.min(maxL, defender.life + dA.healing);
+      console.log(`➕ Cura Ativa: ${defender.username} curou ${defender.life - oldL} | Vida: ${defender.life}`);
+    }
     if (aS.kill > 0 && Math.random() < aS.kill) {
       const idxArr = defender.field.map((c,i)=>c?i:null).filter(v=>v!==null);
-      if(idxArr.length) defender.field[idxArr[Math.floor(Math.random()*idxArr.length)]] = null;
+      if(idxArr.length) {
+        const targetIdx = idxArr[Math.floor(Math.random()*idxArr.length)];
+        console.log(`⚔️ Abate: ${attacker.username} destruiu a carta ${defender.field[targetIdx].nome} de ${defender.username}!`);
+        defender.field[targetIdx] = null;
+      }
     }
     console.log(`⚔️ Combate: ${attacker.username} vs ${defender.username} | Dano: ${total} (P:${aP} vs G:${dG}) | Vida ${defender.username}: ${old} -> ${defender.life}`);
     return { attacker, defender, actualDamage: actual, netDamage: actual };
