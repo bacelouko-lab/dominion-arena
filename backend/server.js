@@ -368,13 +368,7 @@ io.on('connection', (socket) => {
     else io.to(socket.gameId).emit('card-bought', { playerId: socket.playerId, hand: result.hand, gold: result.gold, shop: game.shop });
   });
 
-  socket.on('place-card', ({ cardIndex, fieldPosition }) => {
-    const game = games.get(socket.gameId);
-    if (!game) return;
-    const result = game.placeCard(socket.playerId, cardIndex, fieldPosition);
-    if (result.error) socket.emit('place-error', result.error);
-    else io.to(socket.gameId).emit('card-placed', { playerId: socket.playerId, field: result.field, hand: result.hand });
-  });
+
 
   socket.on('return-card', ({ cardInstanceId, cardCost, fieldPosition }) => {
     const game = games.get(socket.gameId);

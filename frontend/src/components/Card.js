@@ -31,7 +31,7 @@ export default function Card({ card, onClick, onSell, isShop = false, isSynergyM
 
   return (
     <div 
-      className={`dominion-card ${materialClass} ${auraClass} ${isSynergyMatch ? 'synergy-match' : ''}`}
+      className={`dominion-card ${materialClass} ${auraClass} ${isSynergyMatch ? 'synergy-match' : ''} ${isAscendido ? 'is-evolved' : ''}`}
       onClick={() => onClick && onClick(card)}
       onMouseEnter={() => setIsZoomed(true)}
       onMouseLeave={() => setIsZoomed(false)}

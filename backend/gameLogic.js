@@ -296,7 +296,7 @@ class GameLogic {
     const player = this.players[playerId];
     if (!player) return { error: 'Player not found' };
 
-    const oracleCard = player.field.find(c => c && c.id === 22 && c.isEvolved);
+    const oracleCard = player.field.find(c => c && c.id === 13 && c.isEvolved);
     if (!oracleCard) {
       return { error: 'Arquimago Celeste não está no campo ou não está evoluído' };
     }
@@ -332,9 +332,9 @@ class GameLogic {
     const player = this.players[playerId];
     if (!player) return { error: 'Player not found' };
 
-    const anjoCard = player.field.find(c => c && (c.id === 8 || c.id === 6) && c.isEvolved);
+    const anjoCard = player.field.find(c => c && (c.id === 3 || c.id === 6) && c.isEvolved);
     if (!anjoCard) {
-      return { error: 'Avatar de Helios ou Invocador do Sol não está no campo ou não está evoluído' };
+      return { error: 'Invocador do Sol ou Colosso de Aço não está no campo ou não está evoluído' };
     }
 
     if (player.gold < 1) {
@@ -610,20 +610,27 @@ class GameLogic {
               habilidade_ativa: true
             };
 
-            if (positions[1].type === 'hand') {
-              player.hand.splice(positions[1].index, 1);
+            // Determinar posição do destino: se alguma estava no FIELD, a evoluída fica no FIELD
+            const fieldPos = positions.find(p => p.type === 'field');
+            
+            // Remover as originais
+            positions.sort((a, b) => (b.type === 'hand' ? b.index : 99) - (a.type === 'hand' ? a.index : 99));
+            
+            positions.slice(0, 2).forEach(pos => {
+              if (pos.type === 'hand') {
+                player.hand.splice(pos.index, 1);
+              } else {
+                player.field[pos.index] = null;
+              }
+            });
+
+            if (fieldPos) {
+              player.field[fieldPos.index] = evolvedCard;
             } else {
-              player.field[positions[1].index] = null;
-            }
-            if (positions[0].type === 'hand') {
-              player.hand.splice(positions[0].index, 1);
-            } else {
-              player.field[positions[0].index] = null;
+              player.hand.push(evolvedCard);
             }
 
-            player.hand.push(evolvedCard);
-
-            console.log(`✨ EVOLUÇÃO: ${originalCard.nome} evoluiu!`);
+            console.log(`✨ EVOLUÇÃO: ${originalCard.nome} evoluiu no ${fieldPos ? 'Campo' : 'Mão'}!`);
             evolved = true;
             break;
           }
