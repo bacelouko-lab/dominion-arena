@@ -215,6 +215,7 @@ class GameLogic {
     }
     player.diceRolls = rolls;
     player.gold = totalGold;
+    console.log(`🎲 Dados: ${player.username} rolou [${rolls.join(', ')}] | Ouro Total: ${totalGold}`);
     if (diceCount >= 2 && player.consecutiveSaves >= 2) player.consecutiveSaves = 0;
     return { totalGold, rolls, diceCount, savedPoints: player.savedPoints };
   }
@@ -300,6 +301,7 @@ class GameLogic {
     if (player.gold < card.custo || player.hand.length >= 7) return { error: 'Cannot buy' };
     player.gold -= card.custo;
     player.hand.push({ ...card, purchasePrice: card.custo });
+    console.log(`🛒 Compra: ${player.username} comprou ${card.nome} por ${card.custo} ouro.`);
     this.shop.splice(shopCardIndex, 1);
     this.checkEvolution(playerId);
     return { success: true, hand: player.hand, gold: player.gold };
@@ -356,6 +358,7 @@ class GameLogic {
           });
           if (targetPos.t === 'field') player.field[targetPos.i] = ev;
           else player.hand.push(ev);
+          console.log(`✨ Evolução: ${player.username} fundiu duas cópias de ${base.nome} em ${ev.nome}!`);
           evolved = true;
           break;
         }
@@ -554,7 +557,8 @@ class GameLogic {
       const idxArr = defender.field.map((c,i)=>c?i:null).filter(v=>v!==null);
       if(idxArr.length) defender.field[idxArr[Math.floor(Math.random()*idxArr.length)]] = null;
     }
-    return { attacker, defender, actualDamage: actual, netDamage: actual }; 
+    console.log(`⚔️ Combate: ${attacker.username} vs ${defender.username} | Dano: ${total} (P:${aP} vs G:${dG}) | Vida ${defender.username}: ${old} -> ${defender.life}`);
+    return { attacker, defender, actualDamage: actual, netDamage: actual };
   }
 }
 
