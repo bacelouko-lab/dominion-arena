@@ -393,9 +393,14 @@ class GameLogic {
   calculateSynergies(playerId) {
     const player = this.players[playerId];
     const s = { regions: {}, classes: {} };
+    const uniqueIds = new Set();
+    
     player.field.filter(c => c).forEach(c => {
-      s.regions[c.regiao] = (s.regions[c.regiao] || 0) + 1;
-      s.classes[c.classe] = (s.classes[c.classe] || 0) + 1;
+      if (!uniqueIds.has(c.id)) {
+        uniqueIds.add(c.id);
+        s.regions[c.regiao] = (s.regions[c.regiao] || 0) + 1;
+        s.classes[c.classe] = (s.classes[c.classe] || 0) + 1;
+      }
     });
     player.synergies = s;
     return s;
