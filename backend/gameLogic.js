@@ -14,6 +14,7 @@ class GameLogic {
     this.eliminations = [];
     this.pool = this.initializePool();
     this.shufflePool();
+    this.isPublic = false;
   }
 
   shufflePool() {
@@ -56,9 +57,10 @@ class GameLogic {
       connected: true,
       rerollsRemaining: 2,
       anjoGovernanteBonus: 0,
+      anjoGovernanteSpent: 0,
       freeCardUsed: false,
       consecutiveSaves: 0,
-      // Status temporários de combate
+      // Status temporários de combate (resetados a cada apply)
       immuneDirect: false,
       reflect: 0,
       ignoreGrd: 0,
@@ -66,6 +68,26 @@ class GameLogic {
       swap: false
     };
     this.playerOrder.push(playerId);
+  }
+
+  getGameState() {
+    return {
+      gameId: this.gameId,
+      players: this.players,
+      playerOrder: this.playerOrder,
+      currentPlayerIndex: this.currentPlayerIndex,
+      turn: this.turn,
+      round: this.round,
+      phase: this.phase,
+      shop: this.shop,
+      poolSize: this.pool.length,
+      eliminations: this.eliminations,
+      isPublic: this.isPublic
+    };
+  }
+
+  getPlayerState(playerId) {
+    return this.players[playerId];
   }
 
   getCurrentPlayer() {
@@ -237,6 +259,37 @@ class GameLogic {
     return this.shop;
   }
 
+  chooseShopOption(playerId, choseShop) {
+    const player = this.players[playerId];
+    if (!player) return { error: 'Player not found' };
+    player.choseShop = choseShop;
+    if (!choseShop) {
+      if (this.shop && this.shop.length > 0) {
+        this.shop.forEach(card => this.returnCardToPool(card));
+        this.shop = [];
+      }
+      player.savedPoints += player.gold;
+      player.gold = 0;
+      player.consecutiveSaves++;
+      this.phase = 'combat';
+    } else {
+      player.consecutiveSaves = 0;
+      this.generateShop(playerId);
+      this.phase = 'buy';
+    }
+    return { choseShop, phase: this.phase, gold: player.gold, savedPoints: player.savedPoints };
+  }
+
+  rerollShop(playerId) {
+    const player = this.players[playerId];
+    if (!player || player.gold < 1) return { error: 'Not enough gold' };
+    player.gold -= 1;
+    this.shop.forEach(card => this.returnCardToPool(card));
+    this.shop = [];
+    this.generateShop(playerId);
+    return { shop: this.shop, gold: player.gold };
+  }
+
   buyCard(playerId, cardInstanceId) {
     const player = this.players[playerId];
     const shopCardIndex = this.shop.findIndex(c => c.instanceId === cardInstanceId);
@@ -248,6 +301,31 @@ class GameLogic {
     this.shop.splice(shopCardIndex, 1);
     this.checkEvolution(playerId);
     return { success: true, hand: player.hand, gold: player.gold };
+  }
+
+  sellCard(playerId, cardInstanceId, isField) {
+    const player = this.players[playerId];
+    if (!player) return { error: 'Player not found' };
+    let card, cardIndex;
+    if (isField) {
+      cardIndex = player.field.findIndex(c => c && c.instanceId === cardInstanceId);
+      if (cardIndex !== -1) {
+        card = player.field[cardIndex];
+        player.field[cardIndex] = null;
+      }
+    } else {
+      cardIndex = player.hand.findIndex(c => c && c.instanceId === cardInstanceId);
+      if (cardIndex !== -1) {
+        card = player.hand[cardIndex];
+        player.hand.splice(cardIndex, 1);
+      }
+    }
+    if (!card) return { error: 'Not found' };
+    const refund = card.purchasePrice !== undefined ? card.purchasePrice : 1;
+    player.gold += refund;
+    this.returnCardToPool(card);
+    this.calculateSynergies(playerId);
+    return { success: true, gold: player.gold, hand: player.hand, field: player.field };
   }
 
   checkEvolution(playerId) {
@@ -364,6 +442,8 @@ class GameLogic {
 
   applyActiveAbilities(attacker, defender) {
     let d = 0, h = 0, p = 0, g = 0, b = 0, immune = false, refl = 0;
+    this.resetStatus(attacker);
+    this.resetStatus(defender);
     attacker.field.filter(c => c && c.isEvolved).forEach(c => {
       const r = this.applySingleCardAbility(attacker, c, defender);
       d += r.direct || 0; h += r.healing || 0; p += r.pow || 0; g += r.grd || 0; b += r.burn || 0;
@@ -384,7 +464,7 @@ class GameLogic {
     }
     else if (cid === 4) { r.healing = 4; }
     else if (cid === 5) { r.grd = 1; r.burn = 1; }
-    else if (cid === 6) { r.immuneDirect = true; console.log("🛡️ Colosso: Imunidade ativada!"); }
+    else if (cid === 6) { r.immuneDirect = true; }
     else if (cid === 7) { player.ignoreGrd = 0.25; }
     else if (cid === 8) { r.pow = 3; r.grd = 3; }
     else if (cid === 9) { r.grd = 3; r.healing = 2; }
@@ -403,31 +483,67 @@ class GameLogic {
     return r;
   }
 
+  activateAnjoGovernante(playerId) {
+    const player = this.players[playerId];
+    if (!player || player.gold < 1) return { error: 'Not enough gold' };
+    player.gold -= 1;
+    player.anjoGovernanteSpent += 1;
+    player.anjoGovernanteBonus += 2;
+    return { success: true, gold: player.gold, bonus: player.anjoGovernanteBonus, spent: player.anjoGovernanteSpent };
+  }
+
+  getRandomAttackTarget(attackerId) {
+    let targets = Object.keys(this.players).filter(pid => pid !== attackerId && this.players[pid].life > 0);
+    if (targets.length === 0) return null;
+    let freshTargets = targets.filter(pid => !this.attackedThisRound.includes(pid));
+    let target = freshTargets.length > 0 ? freshTargets[Math.floor(Math.random() * freshTargets.length)] : targets[Math.floor(Math.random() * targets.length)];
+    this.attackedThisRound.push(target);
+    return target;
+  }
+
+  recordElimination(playerId) {
+    if (!this.eliminations.includes(playerId)) {
+      this.eliminations.push(playerId);
+      const player = this.players[playerId];
+      if (player) {
+        player.hand.forEach(c => this.returnCardToPool(c));
+        player.field.forEach(c => this.returnCardToPool(c));
+        player.hand = [];
+        player.field = Array(6).fill(null);
+      }
+    }
+  }
+
+  chooseCopiedSynergy(playerId, region, level) {
+    const player = this.players[playerId];
+    if (!player) return { error: 'Player not found' };
+    player.copiedSynergy = region;
+    player.copiedSynergyLevel = level;
+    return { success: true, copiedSynergy: region, copiedLevel: level };
+  }
+
   calculateCombat(attacker, defender) {
     this.calculateSynergies(attacker.playerId);
     this.calculateSynergies(defender.playerId);
-    
     const aS = this.applySynergyBonuses(attacker, defender);
     const dS = this.applySynergyBonuses(defender, attacker);
     const aA = this.applyActiveAbilities(attacker, defender);
     const dA = this.applyActiveAbilities(defender, attacker);
     attacker.immuneDirect = aS.immuneDirect || attacker.immuneDirect;
     defender.immuneDirect = dS.immuneDirect || defender.immuneDirect;
-    let aP = attacker.field.reduce((acc, c) => acc + (c?c.pow:0), 0) + aS.powBonus + aS.powPlus + aA.pow + aS.transBonus;
+    let aP = attacker.field.reduce((acc, c) => acc + (c?c.pow:0), 0) + aS.powBonus + aS.powPlus + aA.pow + aS.transBonus + (attacker.anjoGovernanteBonus || 0);
     if (aS.crit > 0 && Math.random() < aS.crit) aP = Math.ceil(aP * 2);
     let dG = defender.field.reduce((acc, c) => acc + (c?c.grd:0), 0) + dS.grdBonus + dS.grdPlus + dA.grd + dS.transBonus;
     if (attacker.ignoreGrd) dG = Math.floor(dG * (1 - attacker.ignoreGrd));
     let dmg = Math.max(0, aP - dG);
     let dir = aS.direct + aA.direct;
     if (defender.immuneDirect || dS.immuneDirect || dA.immuneDirect) dir = 0;
-
     let total = dmg + dir;
     if (dS.limit && total > dS.limit) total = dS.limit;
     if (attacker.exec && defender.life <= Math.ceil(20 * 0.2)) total = defender.life;
     const old = defender.life;
     defender.life = Math.max(0, defender.life - total);
     const actual = old - defender.life;
-
     const ref = (dS.reflect || 0) + (defender.reflect || 0) + (dA.reflect || 0) + (dS.transBonus ? 0.03 : 0);
     if (ref > 0 && actual > 0) attacker.life = Math.max(0, attacker.life - Math.ceil(actual * ref));
     if (aA.burn) defender.burnStacks = (defender.burnStacks || 0) + aA.burn;
@@ -435,7 +551,7 @@ class GameLogic {
       const idxArr = defender.field.map((c,i)=>c?i:null).filter(v=>v!==null);
       if(idxArr.length) defender.field[idxArr[Math.floor(Math.random()*idxArr.length)]] = null;
     }
-    return { attacker, defender, actualDamage: actual };
+    return { attacker, defender, actualDamage: actual, netDamage: actual }; 
   }
 }
 
