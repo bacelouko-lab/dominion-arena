@@ -541,6 +541,7 @@ class GameLogic {
     let dir = aS.direct + aA.direct;
     if (defender.immuneDirect || dS.immuneDirect || dA.immuneDirect) dir = 0;
     let total = dmg + dir;
+    if (total <= 0) total = 1; // Dano mínimo para evitar partidas infinitas
     if (dS.limit && total > dS.limit) total = dS.limit;
     if (attacker.exec && defender.life <= Math.ceil(20 * 0.2)) total = defender.life;
     const old = defender.life;
