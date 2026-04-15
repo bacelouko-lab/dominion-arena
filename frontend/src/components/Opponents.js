@@ -206,7 +206,7 @@ export default function Opponents({ opponents, currentUsername, gameId }) {
                         {card.nome?.slice(0, 15)}
                       </div>
                       <div style={{ fontSize: '11px', marginTop: '5px', color: '#fff' }}>
-                        P <span style={{color: '#ff4d4d'}}>{card.atk}</span> G <span style={{color: '#fff'}}>{card.def}</span>
+                        P <span style={{color: '#ff4d4d'}}>{card.pow}</span> G <span style={{color: '#3498db'}}>{card.grd}</span>
                       </div>
                       {card.isEvolved && (
                         <div style={{ fontSize: '10px', color: 'var(--accent-color)', marginTop: '3px', fontWeight: 'bold' }}>

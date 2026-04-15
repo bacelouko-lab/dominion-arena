@@ -73,7 +73,7 @@ class GameLogic {
   getGameState() {
     return {
       gameId: this.gameId,
-      players: this.players,
+      players: Object.values(this.players),
       playerOrder: this.playerOrder,
       currentPlayerIndex: this.currentPlayerIndex,
       turn: this.turn,
