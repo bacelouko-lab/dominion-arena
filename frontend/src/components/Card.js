@@ -88,11 +88,11 @@ export default function Card({ card, onClick, onSell, isShop = false, isSynergyM
         <div className="stats-container">
           <div className="stat-shield pow">
             <span style={{ fontSize: '4.5px', color: '#ff4d4d', fontWeight: 'bold', marginBottom: '-2px' }}>POW</span>
-            <span className="stat-value">{card.atk}</span>
+            <span className="stat-value">{card.pow}</span>
           </div>
           <div className="stat-shield grd">
             <span style={{ fontSize: '4.5px', color: '#4d94ff', fontWeight: 'bold', marginBottom: '-2px' }}>GRD</span>
-            <span className="stat-value">{card.def}</span>
+            <span className="stat-value">{card.grd}</span>
           </div>
         </div>
 
