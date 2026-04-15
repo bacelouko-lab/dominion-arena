@@ -533,9 +533,9 @@ class GameLogic {
     const dA = this.applyActiveAbilities(defender, attacker);
     attacker.immuneDirect = aS.immuneDirect || attacker.immuneDirect;
     defender.immuneDirect = dS.immuneDirect || defender.immuneDirect;
-    let aP = attacker.field.reduce((acc, c) => acc + (c?c.pow:0), 0) + aS.powBonus + aS.powPlus + aA.pow + aS.transBonus + (attacker.anjoGovernanteBonus || 0);
+    let aP = attacker.field.reduce((acc, c) => acc + (c ? (c.pow || 0) : 0), 0) + (aS.powBonus || 0) + (aS.powPlus || 0) + (aA.pow || 0) + (aS.transBonus || 0) + (attacker.anjoGovernanteBonus || 0);
     if (aS.crit > 0 && Math.random() < aS.crit) aP = Math.ceil(aP * 2);
-    let dG = defender.field.reduce((acc, c) => acc + (c?c.grd:0), 0) + dS.grdBonus + dS.grdPlus + dA.grd + dS.transBonus;
+    let dG = defender.field.reduce((acc, c) => acc + (c ? (c.grd || 0) : 0), 0) + (dS.grdBonus || 0) + (dS.grdPlus || 0) + (dA.grd || 0) + (dS.transBonus || 0);
     if (attacker.ignoreGrd) dG = Math.floor(dG * (1 - attacker.ignoreGrd));
     let dmg = Math.max(0, aP - dG);
     let dir = aS.direct + aA.direct;
