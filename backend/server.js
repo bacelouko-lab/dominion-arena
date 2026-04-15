@@ -76,7 +76,7 @@ app.get('/api/games/public', (req, res) => {
 
   for (const [gameId, game] of games.entries()) {
     const isLobbyPhase = game.turn === 0;
-    const isNotFull = Object.keys(game.players).length < 6;
+    const isNotFull = Object.keys(game.players).length < 8;
     
     if (game.isPublic && isLobbyPhase && isNotFull) {
       availableGameId = gameId;
@@ -125,7 +125,9 @@ const ELO_TABLE = {
   3: [+25, -10, -15],
   4: [+25, +10, -10, -25],
   5: [+30, +15, -5, -15, -25],
-  6: [+30, +20, +10, -10, -20, -30]
+  6: [+30, +20, +10, -10, -20, -30],
+  7: [+35, +20, +10, 0, -10, -20, -35],
+  8: [+40, +25, +15, +5, -5, -15, -25, -40]
 };
 
 // ========== FUNÇÃO PARA SALVAR PARTIDA (RANKING) ==========

@@ -161,7 +161,7 @@ export default function GamePage() {
           
           <hr style={{ margin: '20px 0' }} />
           
-          <h3>👥 Jogadores na sala ({totalPlayers}/6):</h3>
+          <h3>👥 Jogadores na sala ({totalPlayers}/8):</h3>
           <ul style={{ listStyle: 'none', padding: 0 }}>
             {players.map((p, idx) => (
               <li key={idx} style={{ 
