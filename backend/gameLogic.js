@@ -71,11 +71,13 @@ class GameLogic {
   }
 
   getGameState() {
+    const currentPlayer = this.getCurrentPlayer();
     return {
       gameId: this.gameId,
       players: Object.values(this.players),
       playerOrder: this.playerOrder,
       currentPlayerIndex: this.currentPlayerIndex,
+      currentPlayerId: currentPlayer ? currentPlayer.playerId : null,
       turn: this.turn,
       round: this.round,
       phase: this.phase,

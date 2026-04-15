@@ -305,12 +305,16 @@ io.on('connection', (socket) => {
   socket.on('roll-dice', () => {
     const game = games.get(socket.gameId);
     if (!game) return;
+    // Trava de Turno
+    const currentPlayer = game.getCurrentPlayer();
+    if (!currentPlayer || currentPlayer.playerId !== socket.playerId || game.phase !== 'roll') return;
+
     const result = game.rollDice(socket.playerId);
     if (result.error) socket.emit('error', result.error);
     else {
       io.to(socket.gameId).emit('dice-rolled', { playerId: socket.playerId, ...result });
       game.phase = 'shop_decision';
-      io.to(socket.gameId).emit('phase-changed', { phase: 'shop_decision', turn: game.turn });
+      io.to(socket.gameId).emit('phase-changed', { phase: 'shop_decision', turn: game.turn, nextPlayerId: socket.playerId });
     }
   });
 
@@ -347,9 +351,15 @@ io.on('connection', (socket) => {
   socket.on('choose-shop-option', ({ choseShop }) => {
     const game = games.get(socket.gameId);
     if (!game) return;
+    const currentPlayer = game.getCurrentPlayer();
+    if (!currentPlayer || currentPlayer.playerId !== socket.playerId) return;
+
     const result = game.chooseShopOption(socket.playerId, choseShop);
     if (result.error) socket.emit('error', result.error);
-    else io.to(socket.gameId).emit('shop-option-chosen', { playerId: socket.playerId, ...result });
+    else {
+      io.to(socket.gameId).emit('shop-option-chosen', { playerId: socket.playerId, ...result });
+      io.to(socket.gameId).emit('phase-changed', { phase: result.phase, nextPlayerId: socket.playerId });
+    }
   });
 
   socket.on('reroll-shop', () => {
@@ -363,6 +373,9 @@ io.on('connection', (socket) => {
   socket.on('buy-card', ({ cardInstanceId }) => {
     const game = games.get(socket.gameId);
     if (!game) return;
+    const currentPlayer = game.getCurrentPlayer();
+    if (!currentPlayer || currentPlayer.playerId !== socket.playerId) return;
+
     const result = game.buyCard(socket.playerId, cardInstanceId);
     if (result.error) socket.emit('buy-error', result.error);
     else io.to(socket.gameId).emit('card-bought', { playerId: socket.playerId, hand: result.hand, gold: result.gold, shop: game.shop });
