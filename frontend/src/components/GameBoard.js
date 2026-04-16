@@ -10,8 +10,11 @@ import Opponents from './Opponents';
 import BattleLog from './BattleLog';
 import soundManager from '../lib/soundManager';
 import TimerHeader from './TimerHeader';
+import GameOverModal from './GameOverModal';
+import { useRouter } from 'next/router';
 
 export default function GameBoard({ gameState, gameId, username }) {
+  const router = useRouter();
   const socket = getSocket();
   const [players, setPlayers] = useState(gameState?.players || []);
   const [shop, setShop] = useState(gameState?.shop || []);
@@ -41,6 +44,8 @@ export default function GameBoard({ gameState, gameId, username }) {
 
   const [waitingForPlayer, setWaitingForPlayer] = useState(null);
   const [disconnectionCountdown, setDisconnectionCountdown] = useState(0);
+  const [finalRanking, setFinalRanking] = useState([]);
+  const [eloChanges, setEloChanges] = useState({});
 
   const effectiveCurrentPlayerId = currentPlayerId || (players.length > 0 ? players[0]?.playerId : null);
   const isMyTurn = effectiveCurrentPlayerId && currentPlayer?.playerId === effectiveCurrentPlayerId && currentPlayer?.username === username;
@@ -138,8 +143,12 @@ export default function GameBoard({ gameState, gameId, username }) {
     socket.on('player-reconnected', handleReconnected);
     
     // Salva o playerId no localStorage para reconexão
-    if (currentPlayer?.playerId) {
-      localStorage.setItem(`player_${gameId}`, currentPlayer.playerId);
+    // Salva o playerId no localStorage para reconexão
+    if (gameState?.players) {
+      const me = gameState.players.find(p => p.username === username);
+      if (me?.playerId) {
+        localStorage.setItem(`player_${gameId}`, me.playerId);
+      }
     }
     
     return () => {
@@ -381,17 +390,17 @@ export default function GameBoard({ gameState, gameId, username }) {
       if (attacker.username === username) alert(`⚔️ Você causou ${netDamage} de dano em ${defender.username}!`);
       else if (defender.username === username) alert(`💔 Você recebeu ${netDamage} de dano de ${attacker.username}!`);
     });
-    socket.on('game-over', ({ winner, loser }) => {
+    socket.on('game-over', ({ winner, ranking, eloChanges }) => {
       if (winner.username === username) {
         soundManager.play('victory');
-        alert(`🏆 PARABÉNS! Você venceu!`);
       } else {
         soundManager.play('defeat');
-        alert(`🏆 FIM DE JOGO! ${winner.username} venceu!`);
       }
+      setFinalRanking(ranking || []);
+      setEloChanges(eloChanges || {});
       setGameWinner(winner);
       setPhase('end');
-      setTimeout(() => { if (confirm('Deseja voltar ao menu?')) window.location.href = '/'; }, 3000);
+      // Removemos o alert e o timeout antigo para usar o novo modal
     });
     socket.on('synergies-calculated', (data) => setSynergies(data));
     socket.on('synergy-copied', ({ playerId, copiedSynergy, copiedLevel }) => {
@@ -838,7 +847,17 @@ export default function GameBoard({ gameState, gameId, username }) {
 
       </div>
 
-      <BattleLog gameId={gameId} />
+         <BattleLog gameId={gameId} />
+
+      {/* MODAL DE FIM DE JOGO */}
+      {phase === 'end' && (
+        <GameOverModal 
+          ranking={finalRanking}
+          eloChanges={eloChanges}
+          myPlayerId={players.find(p => p.username === username)?.playerId}
+          onBackToMenu={() => router.push('/')}
+        />
+      )}
     </div>
    </div>
   );

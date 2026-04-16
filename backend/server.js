@@ -133,6 +133,7 @@ const ELO_TABLE = {
 // ========== FUNÇÃO PARA SALVAR PARTIDA (RANKING) ==========
 async function saveMatch(game, ranking) {
   console.log('🟢 saveMatch (Ranking) chamada!', { ranking });
+  const eloChanges = {};
   
   const { supabase } = require('./supabase');
   const numPlayers = ranking.length;
@@ -190,6 +191,13 @@ async function saveMatch(game, ranking) {
         .update(updateData)
         .eq('id', playerId);
 
+      // Armazenar para retorno ao frontend
+      eloChanges[playerId] = {
+        gain: eloGain,
+        newElo: newElo,
+        username: user.username
+      };
+
       // TELEMETRIA E BALANCEAMENTO
       const player = game.players[playerId];
       if (player) {
@@ -221,8 +229,10 @@ async function saveMatch(game, ranking) {
       }
     }
     console.log('✅ saveMatch processada para todo o ranking!');
+    return eloChanges;
   } catch (err) {
     console.error('❌ Erro crítico em saveMatch:', err);
+    return {};
   }
 }
 
@@ -243,8 +253,9 @@ async function checkGameEnd(gameId, game) {
     game.phase = 'end';
     const finalRanking = [winner.playerId, ...[...game.eliminations].reverse()];
     
+    let eloChanges = {};
     try {
-      await saveMatch(game, finalRanking);
+      eloChanges = await saveMatch(game, finalRanking);
     } catch (err) {
       console.error('❌ Erro ao salvar partida (checkGameEnd):', err);
     }
@@ -254,7 +265,8 @@ async function checkGameEnd(gameId, game) {
       ranking: finalRanking.map(id => ({ 
         playerId: id, 
         username: game.players[id]?.username 
-      }))
+      })),
+      eloChanges
     });
     
     // Agendar limpeza
@@ -297,6 +309,42 @@ io.on('connection', (socket) => {
     socket.emit('game-state', game.getGameState());
     const readyList = readyPlayersMap.get(gameId) || [];
     io.to(gameId).emit('player-joined', { players: Object.values(game.players), readyList });
+  });
+
+  socket.on('reconnect-game', ({ gameId, username, playerId }) => {
+    const game = games.get(gameId);
+    if (!game) {
+      socket.emit('error', 'Partida não encontrada para reconexão.');
+      return;
+    }
+
+    const player = game.players[playerId];
+    if (!player) {
+      socket.emit('error', 'Jogador não encontrado nesta partida.');
+      return;
+    }
+
+    // Associa o novo socket aos dados do player
+    player.connected = true;
+    playerSockets.set(playerId, socket.id);
+    socket.join(gameId);
+    socket.gameId = gameId;
+    socket.playerId = playerId;
+
+    // Cancela qualquer timer de eliminação pendente
+    const timerKey = `${gameId}-${playerId}`;
+    if (disconnectTimers.has(timerKey)) {
+      clearTimeout(disconnectTimers.get(timerKey));
+      disconnectTimers.delete(timerKey);
+      console.log(`🔌 ${username} reconectou e o timer de eliminação foi cancelado.`);
+    }
+
+    // Notifica os outros e envia o estado atualizado para o jogador que voltou
+    io.to(gameId).emit('player-reconnected', { playerId, username });
+    socket.emit('game-state', game.getGameState());
+    
+    // Sincroniza logs
+    emitLogs(gameId, game);
   });
 
   socket.on('player-ready', ({ gameId }) => {

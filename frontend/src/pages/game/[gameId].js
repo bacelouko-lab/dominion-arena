@@ -34,13 +34,28 @@ export default function GamePage() {
 
     socket.on('connect', () => {
       setConnected(true);
-      socket.emit('join-game', { gameId, username, userId: safeUserId });
+      
+      const savedPlayerId = localStorage.getItem(`player_${gameId}`);
+      if (savedPlayerId) {
+        console.log('🔄 Tentando reconectar com ID salvo:', savedPlayerId);
+        socket.emit('reconnect-game', { gameId, username, playerId: savedPlayerId });
+      } else {
+        socket.emit('join-game', { gameId, username, userId: safeUserId });
+      }
     });
 
     socket.on('game-state', (state) => {
       setGameState(state);
       const currentPlayer = state.players.find(p => p.username === username);
-      if (currentPlayer) setPlayerState(currentPlayer);
+      if (currentPlayer) {
+        setPlayerState(currentPlayer);
+        // Salva para reconexão
+        localStorage.setItem(`player_${gameId}`, currentPlayer.playerId);
+      }
+      // Se a partida já começou no servidor, pula o lobby
+      if (state.turn > 0) {
+        setGameStarted(true);
+      }
     });
 
     socket.on('player-joined', ({ players, readyList }) => {

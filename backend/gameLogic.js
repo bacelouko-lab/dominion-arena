@@ -290,10 +290,6 @@ class GameLogic {
       let custo = selectedCard.custo;
       const hasEscriba = player.field.some(c => c && c.id === 15 && c.isEvolved);
       if (hasEscriba && custo <= 3) custo = Math.max(0, custo - 1);
-      if (synergies.regions?.['Aether'] >= 4 && !player.freeCardUsed && custo > 0) {
-        custo = 0;
-        player.freeCardUsed = true;
-      }
       this.shop.push({ ...selectedCard, custo, instanceId: `${selectedCard.id}-${Date.now()}-${Math.random()}` });
     }
     return this.shop;
@@ -471,7 +467,10 @@ class GameLogic {
 
   applySynergyBonuses(player, opponent = null) {
     const s = player.synergies || { regions: {}, classes: {} };
-    if (opponent && opponent.synergies?.regions?.['Umbra'] >= 5) return { powBonus: 0, grdBonus: 0, multi: 1 };
+    if (opponent && opponent.synergies?.regions?.['Umbra'] >= 5) {
+      // Umbra Nv5: Desativa TODOS os bônus de sinergia do oponente (Vazio)
+      return { powBonus: 0, grdBonus: 0, direct: 0, multi: 1, reflect: 0, limit: 0, gold: 0, heal: 0, life: 0, double: false, dice: 0, six: false, kill: 0, grdPlus: 0, powPlus: 0, immuneDirect: false, crit: 0, transBonus: 0, fullHeal: false, wisdomBonus: false, bonusGold: 0, fixedDice: 0 };
+    }
     let bonuses = { powBonus: 0, grdBonus: 0, direct: 0, multi: 1, reflect: 0, limit: 0, gold: 0, heal: 0, life: 0, double: false, dice: 0, six: false, kill: 0, grdPlus: 0, powPlus: 0, immuneDirect: false, crit: 0, transBonus: 0, fullHeal: false, wisdomBonus: false, bonusGold: 0, fixedDice: 0 };
     for (const [r, c] of Object.entries(s.regions)) {
       [3, 4, 5].forEach(lv => {
@@ -621,8 +620,9 @@ class GameLogic {
     let dir = aS.direct + aA.direct;
     if (defender.immuneDirect || dS.immuneDirect || dA.immuneDirect) dir = 0;
     let total = dmg + dir;
+    if (aS.multi > 1) total = Math.ceil(total * aS.multi); // Solari Nv5 (Supernova)
     if (total <= 0) total = 1; // Dano mínimo para evitar partidas infinitas
-    if (dS.limit && total > dS.limit) total = dS.limit;
+    if (dS.limit && total > dS.limit) total = dS.limit; // Gladius Nv5 (Indestrutível)
     if (attacker.exec && defender.life <= Math.floor(30 * 0.25)) total = defender.life;
     const old = defender.life;
     defender.life = Math.max(0, defender.life - total);
