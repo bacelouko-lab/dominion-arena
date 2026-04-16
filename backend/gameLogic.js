@@ -183,14 +183,14 @@ class GameLogic {
       const finalHeal = Math.ceil(healBase * multiplier);
       if (finalHeal > 0) {
         const oldLife = player.life;
-        const maxL = bonuses.life ? 20 + bonuses.life : 20;
+        const maxL = bonuses.life ? 30 + bonuses.life : 30;
         player.life = Math.min(maxL, player.life + finalHeal);
         this.addLog(`🌿 Cura Veridian: ${player.username} curou ${player.life - oldLife} de vida | Vida: ${player.life}`);
       }
     }
     if (synergies.classes?.['Zelador'] >= 4) {
       const oldLife = player.life;
-      const maxL = bonuses.life ? 20 + bonuses.life : 20;
+      const maxL = bonuses.life ? 30 + bonuses.life : 30;
       player.life = maxL;
       if (player.life > oldLife) {
         this.addLog(`✨ Cura Zelador: ${player.username} restaurou vida máxima | Vida: ${player.life}`);

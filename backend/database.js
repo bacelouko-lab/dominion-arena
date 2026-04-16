@@ -28,7 +28,7 @@ const initDatabase = async () => {
         game_id UUID REFERENCES games(id),
         player_id VARCHAR(255),
         username VARCHAR(255),
-        life INT DEFAULT 20,
+        life INT DEFAULT 30,
         gold INT DEFAULT 0,
         dice INT DEFAULT 1,
         hand JSONB DEFAULT '[]',

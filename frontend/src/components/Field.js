@@ -48,16 +48,17 @@ export default function Field({ field, onDrop, onDragStart, onDragEnd, onDragOve
             onDrop={(e) => handleSlotDrop(e, index)}
             onDragOver={handleDragOver}
             style={{
-              background: card ? 'transparent' : 'rgba(233, 69, 96, 0.03)',
-              border: card ? 'none' : '2px dashed #222',
-              borderRadius: '10px',
+              background: card ? 'transparent' : 'rgba(233, 69, 96, 0.08)',
+              border: card ? 'none' : '2px dashed rgba(233, 69, 96, 0.4)',
+              borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               position: 'relative',
               width: '151px',
               height: '260px',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              boxShadow: card ? 'none' : '0 0 15px rgba(233, 69, 96, 0.1)'
             }}
           >
             {card ? (
@@ -74,7 +75,13 @@ export default function Field({ field, onDrop, onDragStart, onDragEnd, onDragOve
                 />
               </div>
             ) : (
-              <div style={{ color: '#222', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+              <div style={{ 
+                color: 'rgba(233, 69, 96, 0.5)', 
+                fontSize: '11px', 
+                textTransform: 'uppercase', 
+                letterSpacing: '1px',
+                fontWeight: 'bold'
+              }}>
                 Slot Vazio
               </div>
             )}
@@ -82,11 +89,12 @@ export default function Field({ field, onDrop, onDragStart, onDragEnd, onDragOve
             {/* Overlay de Posição */}
             <div style={{
               position: 'absolute',
-              top: '5px',
-              left: '5px',
-              fontSize: '9px',
-              color: '#333',
-              fontWeight: 'bold'
+              top: '8px',
+              left: '8px',
+              fontSize: '10px',
+              color: 'rgba(233, 69, 96, 0.6)',
+              fontWeight: 'bold',
+              textShadow: '0 0 5px rgba(0,0,0,0.8)'
             }}>
               #{index + 1}
             </div>

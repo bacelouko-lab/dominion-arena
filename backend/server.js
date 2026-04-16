@@ -315,7 +315,7 @@ io.on('connection', (socket) => {
       game.round = 1;
       game.currentPlayerIndex = 0;
       for (const playerId in game.players) {
-        game.players[playerId].life = 20;
+        game.players[playerId].life = 30;
         game.players[playerId].gold = 0;
         game.players[playerId].hand = [];
         game.players[playerId].field = Array(6).fill(null);
