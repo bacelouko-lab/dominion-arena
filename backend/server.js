@@ -567,13 +567,25 @@ io.on('connection', (socket) => {
       annulledCard: annulledCard
     });
     
+    // Verifica se o atacante morreu (por reflexão)
+    if (combatResult.attackerDead) {
+      console.log(`💀 Atacante morreu por reflexão! ${attacker.username}`);
+      const ended = await checkGameEnd(socket.gameId, game);
+      if (ended) return;
+
+      io.to(socket.gameId).emit('player-eliminated', { 
+        playerId: attacker.playerId, 
+        username: attacker.username 
+      });
+    }
+
     // Verifica se o defensor morreu
-    if (defender.life <= 0) {
+    if (defender.life <= 0 && !combatResult.attackerDead) {
       console.log(`💀 Jogador morreu em combate! ${defender.username}`);
       game.recordElimination(defender.playerId);
       
       const ended = await checkGameEnd(socket.gameId, game);
-      if (ended) return; // Fim de jogo já tratado em checkGameEnd
+      if (ended) return;
 
       io.to(socket.gameId).emit('player-eliminated', { 
         playerId: defender.playerId, 
