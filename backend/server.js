@@ -486,28 +486,38 @@ io.on('connection', (socket) => {
   // ========== EVENTO DE VENDA DE CARTA ==========
   // ========== EVENTO DE POSICIONAMENTO LIVRE / TROCA ==========
   socket.on('reposition-card', ({ from, to }) => {
-    const game = games.get(socket.gameId);
-    if (!game) return;
+    try {
+      const game = games.get(socket.gameId);
+      if (!game) return;
 
-    const result = game.repositionCard(socket.playerId, from, to);
-    if (result.error) {
-      socket.emit('error', result.error);
-    } else {
-      emitLogs(socket.gameId, game);
-      io.to(socket.gameId).emit('game-state', game.getGameState());
+      const result = game.repositionCard(socket.playerId, from, to);
+      if (result.error) {
+        socket.emit('error', result.error);
+      } else {
+        emitLogs(socket.gameId, game);
+        io.to(socket.gameId).emit('game-state', game.getGameState());
+      }
+    } catch (err) {
+      console.error('❌ Erro fatal em reposition-card:', err);
+      socket.emit('error', 'Erro interno ao mover carta.');
     }
   });
 
   socket.on('sell-card', ({ cardInstanceId, isField }) => {
-    const game = games.get(socket.gameId);
-    if (!game) return;
+    try {
+      const game = games.get(socket.gameId);
+      if (!game) return;
 
-    const result = game.sellCard(socket.playerId, cardInstanceId, isField);
-    if (result.error) {
-      socket.emit('error', result.error);
-    } else {
-      io.to(socket.gameId).emit('game-state', game.getGameState());
-      socket.emit('sell-success', { gold: result.gold });
+      const result = game.sellCard(socket.playerId, cardInstanceId, isField);
+      if (result.error) {
+        socket.emit('error', result.error);
+      } else {
+        io.to(socket.gameId).emit('game-state', game.getGameState());
+        socket.emit('sell-success', { gold: result.gold });
+      }
+    } catch (err) {
+      console.error('❌ Erro fatal em sell-card:', err);
+      socket.emit('error', 'Erro interno ao vender carta.');
     }
   });
 

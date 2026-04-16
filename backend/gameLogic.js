@@ -403,16 +403,39 @@ class GameLogic {
 
   repositionCard(playerId, from, to) {
     const player = this.players[playerId];
-    let c = from.type === 'hand' ? player.hand[from.index] : player.field[from.index];
-    if (!c) return { error: 'No card' };
-    if (from.type === 'hand') player.hand.splice(from.index, 1);
-    else player.field[from.index] = null;
-    if (to.type === 'hand') player.hand.push(c);
-    else {
-      let t = player.field[to.index];
-      if (t) player.hand.push(t);
-      player.field[to.index] = c;
+    if (!player) return { error: 'Player not found' };
+
+    // Validar limites básicos
+    if (from.index < 0 || to.index < 0) return { error: 'Invalid index' };
+    if (from.type === 'field' && from.index >= 6) return { error: 'Invalid field index' };
+    if (to.type === 'field' && to.index >= 6) return { error: 'Invalid field index' };
+
+    // Pegar carta de origem e de destino
+    const c1 = from.type === 'hand' ? player.hand[from.index] : player.field[from.index];
+    const c2 = to.type === 'hand' ? player.hand[to.index] : player.field[to.index];
+
+    if (!c1) return { error: 'No card at source' };
+
+    // Lógica de Troca (Swap)
+    // 1. Colocar c1 no destino
+    if (to.type === 'hand') {
+      player.hand[to.index] = c1;
+    } else {
+      player.field[to.index] = c1;
     }
+
+    // 2. Colocar c2 na origem
+    if (from.type === 'hand') {
+      if (c2) {
+        player.hand[from.index] = c2;
+      } else {
+        // Se c2 for null e estamos movendo da mão para o campo, apenas removemos da mão
+        player.hand.splice(from.index, 1);
+      }
+    } else {
+      player.field[from.index] = c2; // Pode ser null
+    }
+
     this.calculateSynergies(playerId);
     return { success: true, field: player.field, hand: player.hand };
   }
