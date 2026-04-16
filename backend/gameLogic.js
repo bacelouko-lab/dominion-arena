@@ -287,7 +287,7 @@ class GameLogic {
       const selectedCard = this.pool.splice(Math.floor(Math.random() * this.pool.length), 1)[0];
       let custo = selectedCard.custo;
       const hasEscriba = player.field.some(c => c && c.id === 15 && c.isEvolved);
-      if (hasEscriba && custo <= 5) custo = Math.max(0, custo - 1);
+      if (hasEscriba && custo <= 3) custo = Math.max(0, custo - 1);
       if (synergies.regions?.['Aether'] >= 4 && !player.freeCardUsed && custo > 0) {
         custo = 0;
         player.freeCardUsed = true;
@@ -519,8 +519,6 @@ class GameLogic {
   applyActiveAbilities(attacker, defender) {
     let d = 0, h = 0, p = 0, g = 0, b = 0, immune = false, refl = 0;
     const sources = [];
-    this.resetStatus(attacker);
-    this.resetStatus(defender);
     attacker.field.filter(c => c && c.isEvolved).forEach(c => {
       const r = this.applySingleCardAbility(attacker, c, defender);
       d += r.direct || 0; h += r.healing || 0; p += r.pow || 0; g += r.grd || 0;
@@ -541,22 +539,21 @@ class GameLogic {
     if (cid === 1) { r.grd = 2; r.burn = 1; }
     else if (cid === 3) { 
       r.pow = player.field.filter(c=>c).length * 2; 
-      r.grd = player.field.filter(c=>c).length * 2; 
     }
     else if (cid === 4) { r.healing = 4; }
     else if (cid === 5) { r.grd = 1; r.burn = 1; }
     else if (cid === 6) { r.immuneDirect = true; }
-    else if (cid === 7) { player.ignoreGrd = 0.25; }
+    else if (cid === 7) { player.ignoreGrd = 0.15; }
     else if (cid === 8) { r.pow = 3; r.grd = 3; }
     else if (cid === 9) { r.grd = 3; r.healing = 2; }
     else if (cid === 10) { if(player.synergies?.regions?.['Gladius']>=2) r.pow = 2; }
     else if (cid === 11) { r.grd = 4; }
-    else if (cid === 12) { player.ignoreGrd = 0.75; }
+    else if (cid === 12) { player.ignoreGrd = 0.45; }
     else if (cid === 16) { r.grd = 3; r.reflect = 0.05; }
     else if (cid === 17) { r.direct = Math.ceil(player.life * 0.1); }
-    else if (cid === 19) { r.healing = 10; }
+    else if (cid === 19) { r.healing = 7; }
     else if (cid === 20) { r.healing = 3; }
-    else if (cid === 21) { r.reflect = 0.25; }
+    else if (cid === 21) { r.reflect = 0.20; }
     else if (cid === 22) { player.exec = true; }
     else if (cid === 23) { r.direct = 4; }
     else if (cid === 24) { player.swap = true; }
@@ -606,6 +603,8 @@ class GameLogic {
   calculateCombat(attacker, defender) {
     this.calculateSynergies(attacker.playerId);
     this.calculateSynergies(defender.playerId);
+    this.resetStatus(attacker);
+    this.resetStatus(defender);
     const aS = this.applySynergyBonuses(attacker, defender);
     const dS = this.applySynergyBonuses(defender, attacker);
     const aA = this.applyActiveAbilities(attacker, defender);
@@ -622,7 +621,7 @@ class GameLogic {
     let total = dmg + dir;
     if (total <= 0) total = 1; // Dano mínimo para evitar partidas infinitas
     if (dS.limit && total > dS.limit) total = dS.limit;
-    if (attacker.exec && defender.life <= Math.ceil(30 * 0.2)) total = defender.life;
+    if (attacker.exec && defender.life <= Math.floor(30 * 0.25)) total = defender.life;
     const old = defender.life;
     defender.life = Math.max(0, defender.life - total);
     const actual = old - defender.life;
