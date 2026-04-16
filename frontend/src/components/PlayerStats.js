@@ -3,7 +3,20 @@ export default function PlayerStats({ player }) {
 
   return (
     <div className="card" style={{ background: 'rgba(20, 20, 20, 0.8)', border: '1px solid #e94560', boxShadow: '0 0 15px rgba(233, 69, 96, 0.2)' }}>
-      <h3 style={{ color: '#e94560', textTransform: 'uppercase', marginBottom: '15px' }}>{player.username}</h3>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+        <h3 style={{ color: '#e94560', textTransform: 'uppercase', margin: 0 }}>{player.username}</h3>
+        <div style={{ 
+          background: player.timeLeft < 60 ? '#ff4d4d20' : '#ffffff10', 
+          padding: '4px 10px', 
+          borderRadius: '4px',
+          border: `1px solid ${player.timeLeft < 60 ? '#ff4d4d' : '#444'}`,
+          fontSize: '14px',
+          fontFamily: 'monospace',
+          color: player.timeLeft < 60 ? '#ff4d4d' : '#fff'
+        }}>
+          ⏱️ {Math.floor((player.timeLeft || 600) / 60)}:{(player.timeLeft || 600) % 60 < 10 ? '0' : ''}{(player.timeLeft || 600) % 60}
+        </div>
+      </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '10px' }}>
         <div style={{ textAlign: 'center', background: '#000', padding: '8px', borderRadius: '8px', border: '1px solid #333' }}>
           <div style={{ fontSize: '20px', color: '#ff4d4d' }}>❤️</div>

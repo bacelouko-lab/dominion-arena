@@ -62,7 +62,21 @@ export default function Opponents({ opponents, currentUsername, gameId }) {
                   </div>
                 )}
               </div>
-              <div style={{ fontSize: '24px', opacity: 0.7 }}>👁️</div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ 
+                  background: opponent.timeLeft < 60 ? '#ff4d4d20' : '#ffffff10', 
+                  padding: '2px 8px', 
+                  borderRadius: '4px',
+                  border: `1px solid ${opponent.timeLeft < 60 ? '#ff4d4d' : '#444'}`,
+                  fontSize: '12px',
+                  fontFamily: 'monospace',
+                  color: opponent.timeLeft < 60 ? '#ff4d4d' : '#fff',
+                  marginBottom: '5px'
+                }}>
+                  ⏱️ {Math.floor((opponent.timeLeft || 600) / 60)}:{(opponent.timeLeft || 600) % 60 < 10 ? '0' : ''}{(opponent.timeLeft || 600) % 60}
+                </div>
+                <div style={{ fontSize: '24px', opacity: 0.7 }}>👁️</div>
+              </div>
             </div>
           </div>
         ))}
@@ -129,7 +143,7 @@ export default function Opponents({ opponents, currentUsername, gameId }) {
             {/* Status do oponente */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
+              gridTemplateColumns: 'repeat(5, 1fr)',
               gap: '10px',
               marginBottom: '20px',
               padding: '15px',
@@ -137,6 +151,13 @@ export default function Opponents({ opponents, currentUsername, gameId }) {
               border: '1px solid #333',
               borderRadius: '8px'
             }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '24px', color: '#e94560' }}>⏱️</div>
+                <div style={{ fontWeight: 'bold', fontFamily: 'monospace' }}>
+                  {Math.floor((selectedOpponent.timeLeft || 600) / 60)}:{(selectedOpponent.timeLeft || 600) % 60 < 10 ? '0' : ''}{(selectedOpponent.timeLeft || 600) % 60}
+                </div>
+                <div style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase' }}>Tempo Restante</div>
+              </div>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: '24px', color: '#ff4d4d' }}>❤️</div>
                 <div style={{ fontWeight: 'bold' }}>{selectedOpponent.life}</div>

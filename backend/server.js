@@ -777,6 +777,50 @@ io.on('connection', (socket) => {
   });
 });
 
+// ========== SISTEMA DE CRONÔMETRO (CHESS TIMER) ==========
+setInterval(() => {
+  for (const [gameId, game] of games.entries()) {
+    if (game.turn > 0 && game.phase !== 'end') {
+      const currentPlayer = game.getCurrentPlayer();
+      if (currentPlayer && currentPlayer.life > 0) {
+        currentPlayer.timeLeft = Math.max(0, (currentPlayer.timeLeft || 600) - 1);
+        
+        // Emitir apenas o tempo para manter sincronia leve
+        io.to(gameId).emit('timer-tick', { 
+          playerId: currentPlayer.playerId, 
+          timeLeft: currentPlayer.timeLeft 
+        });
+
+        if (currentPlayer.timeLeft <= 0) {
+          console.log(`⏰ TEMPO ESGOTADO: ${currentPlayer.username} em ${gameId} foi eliminado.`);
+          currentPlayer.life = 0;
+          game.recordElimination(currentPlayer.playerId);
+
+          io.to(gameId).emit('player-eliminated', { 
+            playerId: currentPlayer.playerId, 
+            username: currentPlayer.username,
+            reason: 'time'
+          });
+
+          // Verificar se o jogo acabou ou passar o turno
+          checkGameEnd(gameId, game).then(ended => {
+            if (!ended) {
+              const turnResult = game.endCurrentTurn();
+              io.to(gameId).emit('game-state', game.getGameState());
+              io.to(gameId).emit('turn-ended', turnResult);
+              io.to(gameId).emit('phase-changed', { 
+                phase: 'roll', 
+                turn: turnResult.turn, 
+                nextPlayerId: turnResult.nextPlayerId 
+              });
+            }
+          });
+        }
+      }
+    }
+  }
+}, 1000);
+
 const PORT = process.env.PORT || 5000;
 const startServer = async () => {
   console.log('Database disabled - running without database');

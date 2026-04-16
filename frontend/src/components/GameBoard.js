@@ -9,6 +9,7 @@ import Synergies from './Synergies';
 import Opponents from './Opponents';
 import BattleLog from './BattleLog';
 import soundManager from '../lib/soundManager';
+import TimerHeader from './TimerHeader';
 
 export default function GameBoard({ gameState, gameId, username }) {
   const socket = getSocket();
@@ -399,6 +400,19 @@ export default function GameBoard({ gameState, gameId, username }) {
     socket.on('sell-success', ({ gold }) => {
       soundManager.play('coin');
     });
+
+    socket.on('timer-tick', ({ playerId, timeLeft }) => {
+      setPlayers(prev => prev.map(p => p.playerId === playerId ? { ...p, timeLeft } : p));
+      
+      // Alerta sonoro quando tempo está baixo e é a vez do jogador local
+      const me = players.find(p => p.username === username);
+      if (me && playerId === me.playerId && timeLeft <= 30 && timeLeft > 0) {
+        if (timeLeft <= 10 || timeLeft % 5 === 0) {
+          soundManager.play('click');
+        }
+      }
+    });
+
     // Evento de jogador desconectado (avisar que alguém caiu)
     socket.on('player-disconnected', ({ playerId, username, timeoutMs }) => {
       console.log(`⚠️ Jogador ${username} desconectou. Aguardando ${timeoutMs/1000}s...`);
@@ -544,6 +558,12 @@ export default function GameBoard({ gameState, gameId, username }) {
         if (!soundManager.initialized) soundManager.unlock();
       }}
     >
+      <TimerHeader 
+        players={players} 
+        currentPlayerId={effectiveCurrentPlayerId} 
+        myPlayerId={players.find(p => p.username === username)?.playerId} 
+      />
+
       {/* Overlay para dar profundidade */}
       <div style={{
         position: 'absolute',

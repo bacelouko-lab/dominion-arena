@@ -72,7 +72,8 @@ class GameLogic {
       reflect: 0,
       ignoreGrd: 0,
       exec: false,
-      swap: false
+      swap: false,
+      timeLeft: 600 // 10 minutos iniciais
     };
     this.playerOrder.push(playerId);
   }
@@ -158,6 +159,7 @@ class GameLogic {
     const currentPlayer = this.getCurrentPlayer();
     if (currentPlayer) {
       currentPlayer.hasActedThisTurn = true;
+      currentPlayer.timeLeft += 5; // Bônus de 5 segundos ao finalizar turno
       this.applyEndOfTurnEffects(currentPlayer);
       currentPlayer.gold = 0;
     }
