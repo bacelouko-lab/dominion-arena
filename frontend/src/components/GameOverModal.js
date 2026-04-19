@@ -93,7 +93,7 @@ const GameOverModal = ({ ranking, eloChanges, myPlayerId, onBackToMenu }) => {
                   boxShadow: isWinner ? '0 0 15px rgba(243, 156, 18, 0.5)' : 'none',
                   color: isWinner ? '#000' : '#fff'
                 }}>
-                  {index + 1}º
+                  {player.rank || index + 1}º
                 </div>
 
                 {/* Nome do Jogador */}

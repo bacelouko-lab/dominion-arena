@@ -391,14 +391,17 @@ export default function GameBoard({ gameState, gameId, username }) {
       else if (defender.username === username) alert(`💔 Você recebeu ${netDamage} de dano de ${attacker.username}!`);
     });
     socket.on('game-over', ({ winner, ranking, eloChanges }) => {
-      if (winner.username === username) {
+      console.log('🏁 Jogo Encerrado Recebido!', { winner, ranking, eloChanges });
+      
+      if (winner && winner.username === username) {
         soundManager.play('victory');
       } else {
         soundManager.play('defeat');
       }
+      
       setFinalRanking(ranking || []);
       setEloChanges(eloChanges || {});
-      setGameWinner(winner);
+      setGameWinner(winner || { username: 'Vencedor' });
       setPhase('end');
       // Removemos o alert e o timeout antigo para usar o novo modal
     });
@@ -429,6 +432,14 @@ export default function GameBoard({ gameState, gameId, username }) {
       setDisconnectionCountdown(timeoutMs / 1000);
     });
 
+    socket.on('player-eliminated', ({ playerId, username: eliminatedUsername }) => {
+      console.log(`💀 Jogador eliminado: ${eliminatedUsername}`);
+      setPlayers(prev => prev.map(p => p.playerId === playerId ? { ...p, life: 0 } : p));
+      
+      // Feedback visual/sonoro instantâneo
+      soundManager.play('defeat');
+    });
+
     socket.on('player-reconnected', ({ playerId, username }) => {
       console.log(`✅ Jogador ${username} reconectou!`);
       setWaitingForPlayer(null);
@@ -454,6 +465,7 @@ export default function GameBoard({ gameState, gameId, username }) {
       socket.off('synergies-calculated');
       socket.off('synergy-copied');
       socket.off('player-disconnected');
+      socket.off('player-eliminated');
       socket.off('sell-success');
     };
   }, [socket, effectiveCurrentPlayerId]);
@@ -508,18 +520,6 @@ export default function GameBoard({ gameState, gameId, username }) {
       socket.emit('attack-player');
     }
   };
-
-  if (gameWinner) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
-        <div className="card" style={{ textAlign: 'center', maxWidth: '500px', padding: '40px' }}>
-          <div style={{ fontSize: '64px', marginBottom: '20px' }}>🏆</div>
-          <h1 style={{ color: '#f39c12' }}>{gameWinner.username === username ? 'VOCÊ VENCEU!' : `${gameWinner.username} VENCEU!`}</h1>
-          <button onClick={() => window.location.href = '/'} style={{ padding: '12px 24px', cursor: 'pointer' }}>🔄 Voltar ao Menu</button>
-        </div>
-      </div>
-    );
-  }
 
   if (!currentPlayer) return <div>Carregando jogador...</div>;
 

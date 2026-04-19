@@ -131,19 +131,21 @@ const ELO_TABLE = {
 };
 
 // ========== FUNÇÃO PARA SALVAR PARTIDA (RANKING) ==========
-async function saveMatch(game, ranking) {
-  console.log('🟢 saveMatch (Ranking) chamada!', { ranking });
-  const eloChanges = {};
+async function saveMatch(game, playersToSave, specificRank = null) {
+  console.log('🟢 saveMatch (Individual/Ranking) chamada!');
   
   const { supabase } = require('./supabase');
-  const numPlayers = ranking.length;
-  const pointsTable = ELO_TABLE[numPlayers] || ELO_TABLE[2]; 
+  const initialCount = game.initialPlayerCount || 2;
+  const pointsTable = ELO_TABLE[initialCount] || ELO_TABLE[2]; 
+  const eloChanges = {};
 
   try {
-    for (let i = 0; i < numPlayers; i++) {
-      const playerId = ranking[i];
-      const rank = i + 1;
-      const eloGain = pointsTable[i] || 0;
+    for (let i = 0; i < playersToSave.length; i++) {
+      const playerId = playersToSave[i];
+      // Se passar um rank específico (eliminação individual), usa ele.
+      // Caso contrário, tenta inferir (pode ser o vencedor final se for só um)
+      const rank = specificRank || 1; 
+      const eloGain = pointsTable[rank - 1] || 0;
       const isWin = eloGain > 0;
 
       // Buscar ELO atual do jogador
@@ -244,27 +246,57 @@ function emitLogs(gameId, game) {
 }
 
 async function checkGameEnd(gameId, game) {
-  const alivePlayers = Object.values(game.players).filter(p => p.life > 0);
-  if (alivePlayers.length <= 1 && game.phase !== 'end') {
+  const alivePlayers = Object.values(game.players).filter(p => p.life <= 0 || p.life > 0); // Todos
+  const actuallyAlive = Object.values(game.players).filter(p => p.life > 0);
+  
+  // 1. Verificar quem acabou de morrer e ainda não recebeu a tela de fim de jogo
+  for (const player of Object.values(game.players)) {
+    if (player.life <= 0 && !player.gameOverEmitted) {
+      player.gameOverEmitted = true;
+      const rank = (game.initialPlayerCount || Object.keys(game.players).length) - game.eliminations.indexOf(player.playerId);
+      
+      console.log(`📡 Enviando tela de fim de jogo PRIVADA para ${player.username} Rank ${rank}`);
+      
+      try {
+        // Salva apenas esse jogador
+        const eloChanges = await saveMatch(game, [player.playerId], rank);
+        const socketId = playerSockets.get(player.playerId);
+        if (socketId) {
+          io.to(socketId).emit('game-over', {
+            winner: null, // Ele perdeu
+            ranking: [{ playerId: player.playerId, username: player.username, rank }],
+            eloChanges
+          });
+        }
+      } catch (err) {
+        console.error('❌ Erro ao enviar resultado individual:', err);
+      }
+    }
+  }
+
+  // 2. Verificar se o jogo acabou de vez (Só resta 1 vivo)
+  if (actuallyAlive.length <= 1 && game.phase !== 'end') {
     console.log(`🏆 FIM DE JOGO DETECTADO em ${gameId}!`);
-    const winner = alivePlayers[0];
-    if (!winner) return true; // Caso raro onde todos morreram
+    const winner = actuallyAlive[0];
+    if (!winner) return true;
 
     game.phase = 'end';
     const finalRanking = [winner.playerId, ...[...game.eliminations].reverse()];
     
     let eloChanges = {};
     try {
-      eloChanges = await saveMatch(game, finalRanking);
+      // Salva o vencedor
+      eloChanges = await saveMatch(game, [winner.playerId], 1);
     } catch (err) {
-      console.error('❌ Erro ao salvar partida (checkGameEnd):', err);
+      console.error('❌ Erro ao salvar vitória final:', err);
     }
 
     io.to(gameId).emit('game-over', { 
       winner: { playerId: winner.playerId, username: winner.username }, 
-      ranking: finalRanking.map(id => ({ 
+      ranking: finalRanking.map((id, index) => ({ 
         playerId: id, 
-        username: game.players[id]?.username 
+        username: game.players[id]?.username,
+        rank: index + 1
       })),
       eloChanges
     });
@@ -381,6 +413,7 @@ io.on('connection', (socket) => {
         game.players[playerId].hasRerolled = false;
       }
       readyPlayersMap.delete(gameId);
+      game.initialPlayerCount = totalPlayers;
       io.to(gameId).emit('game-start', { gameState: game.getGameState() });
       console.log(`Game ${gameId} started with ${totalPlayers} players`);
     }
@@ -764,41 +797,24 @@ io.on('connection', (socket) => {
                 return;
               }
 
-              if (checkGame.players[playerId] && !checkGame.players[playerId].connected) {
+              const player = checkGame.players[playerId];
+              if (player && !player.connected) {
                 console.log(`💀 ${player.username} não voltou a tempo e foi eliminado.`);
                 
                 // IMPORTANTE: Verificar se era a vez dele ANTES de eliminar
                 const currentPlayerBefore = checkGame.getCurrentPlayer();
                 const wasHisTurn = currentPlayerBefore && currentPlayerBefore.playerId === playerId;
                 
-                checkGame.players[playerId].life = 0;
+                player.life = 0;
                 checkGame.recordElimination(playerId);
 
                 io.to(gameId).emit('player-eliminated', { playerId, username: player.username });
                 io.to(gameId).emit('player-left', { playerId });
                 disconnectTimers.delete(timerKey);
                 
-                // VERIFICAÇÃO DE VITÓRIA POR WO
-                const alivePlayers = Object.values(checkGame.players).filter(p => p.life > 0);
-                if (alivePlayers.length === 1 && checkGame.phase !== 'end') {
-                  const winner = alivePlayers[0];
-                  checkGame.phase = 'end';
-                  
-                  const finalRanking = [winner.playerId, ...[...checkGame.eliminations].reverse()];
-                  try {
-                    await saveMatch(checkGame, finalRanking);
-                  } catch (err) { console.error('WO Save Error:', err); }
-
-                  io.to(gameId).emit('game-over', { 
-                    winner: { playerId: winner.playerId, username: winner.username },
-                    ranking: finalRanking.map(id => ({ 
-                      playerId: id, 
-                      username: checkGame.players[id]?.username 
-                    }))
-                  });
-                  return;
-                }
-
+                // VERIFICAÇÃO DE VITÓRIA POR WO (UNIFICADA)
+                await checkGameEnd(gameId, checkGame);
+                
                 // FORÇAR PASSAGEM DE TURNO SE ERA A VEZ DELE
                 if (wasHisTurn) {
                   console.log(`⏩ Passando turno do jogador eliminado por desconexão...`);

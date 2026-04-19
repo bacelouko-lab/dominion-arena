@@ -27,31 +27,55 @@ export default function Opponents({ opponents, currentUsername, gameId }) {
             key={idx}
             onClick={() => viewOpponentBoard(opponent)}
             style={{
-              background: 'rgba(15, 15, 15, 0.9)',
-              border: '2px solid #e94560',
+              background: opponent.life <= 0 ? 'rgba(30, 30, 30, 0.8)' : 'rgba(15, 15, 15, 0.9)',
+              border: opponent.life <= 0 ? '2px solid #555' : '2px solid #e94560',
               borderRadius: '8px',
               padding: '15px',
               cursor: 'pointer',
               transition: 'all 0.3s',
               position: 'relative',
-              boxShadow: '0 0 10px rgba(233, 69, 96, 0.1)'
+              boxShadow: opponent.life <= 0 ? 'none' : '0 0 10px rgba(233, 69, 96, 0.1)',
+              filter: opponent.life <= 0 ? 'grayscale(100%) opacity(0.7)' : 'none'
             }}
             onMouseEnter={(e) => {
+              if (opponent.life <= 0) return;
               e.currentTarget.style.transform = 'translateY(-3px)';
               e.currentTarget.style.boxShadow = '0 0 20px rgba(233, 69, 96, 0.4)';
               e.currentTarget.style.borderColor = '#ff4d4d';
             }}
             onMouseLeave={(e) => {
+              if (opponent.life <= 0) return;
               e.currentTarget.style.transform = 'translateY(0)';
               e.currentTarget.style.boxShadow = '0 0 10px rgba(233, 69, 96, 0.1)';
               e.currentTarget.style.borderColor = '#e94560';
             }}
           >
+            {opponent.life <= 0 && (
+              <div style={{
+                position: 'absolute',
+                top: '-10px',
+                right: '-10px',
+                background: '#333',
+                borderRadius: '50%',
+                width: '30px',
+                height: '30px',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                fontSize: '18px',
+                border: '2px solid #555',
+                zIndex: 10
+              }}>
+                💀
+              </div>
+            )}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h3 style={{ margin: 0, color: '#e94560', textTransform: 'uppercase', fontSize: '16px' }}>{opponent.username}</h3>
-                <div style={{ fontSize: '14px', color: '#fff', marginTop: '5px' }}>
-                  ❤️ Vida: {opponent.life}
+                <h3 style={{ margin: 0, color: opponent.life <= 0 ? '#888' : '#e94560', textTransform: 'uppercase', fontSize: '16px' }}>
+                  {opponent.username}
+                </h3>
+                <div style={{ fontSize: '14px', color: opponent.life <= 0 ? '#666' : '#fff', marginTop: '5px' }}>
+                  {opponent.life <= 0 ? '💀 ELIMINADO' : `❤️ Vida: ${opponent.life}`}
                 </div>
                 <div style={{ fontSize: '12px', color: '#aaa', marginTop: '5px' }}>
                   🃏 Campo: {opponent.field?.filter(c => c !== null).length || 0}/6
